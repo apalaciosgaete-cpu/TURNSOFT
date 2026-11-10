@@ -7,6 +7,7 @@ __pycache__/
 .env
 .env.local
 .env.*.local
+.secrets/
 
 # Build / dist
 dist/
@@ -35,7 +36,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Docker
-.dockerignore
 
 # Cobertura de pruebas
 coverage/
@@ -43,3 +43,4 @@ coverage/
 
 # TipoScript
 *.tsbuildinfo
+.vercel

@@ -1,0 +1,10 @@
+.git/
+.secrets/
+.env
+.env.*
+backend/
+database/
+docs/
+**/node_modules/
+**/dist/
+*.log

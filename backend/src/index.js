@@ -7,16 +7,23 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 // Middleware
-app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173' }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: allowedOrigins }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
 // Rutas
 app.use('/api/empresas', require('./routes/empresas'));
+app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/guardias', require('./routes/guardias'));
 app.use('/api/turno-plantillas', require('./routes/turnoPlantillas'));
 app.use('/api/puestos', require('./routes/puestos'));
+app.use('/api/motor', require('./routes/motor'));
 app.use('/api/horarios', require('./routes/horarios'));
 app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/reportes', require('./routes/reportes'));
@@ -24,7 +31,13 @@ app.use('/api/auth', require('./routes/auth'));
 
 // Ruta de salud
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'TURNSOFT Backend', timestamp: new Date() });
+  res.json({
+    status: 'ok',
+    service: 'TURNSOFT Backend',
+    engine: 'turnsoft-v2',
+    sectors: ['seguridad', 'salud', 'mineria', 'retail', 'logistica'],
+    timestamp: new Date(),
+  });
 });
 
 // Manejo de errores 404

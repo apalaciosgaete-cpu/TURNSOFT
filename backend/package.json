@@ -7,7 +7,8 @@
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
     "migrate": "node -r dotenv/config src/migrate.js",
-    "seed": "node -r dotenv/config src/seed.js"
+    "seed": "node -r dotenv/config src/seed.js",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
