@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TURNSOFT · Color corporativo</title>
+<style>
+  :root {
+    --page: #eef2f5;
+    --ink: #0f172a;
+    --muted: #64748b;
+    --line: #e2e8f0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: "Segoe UI", Inter, system-ui, -apple-system, sans-serif;
+    padding: 42px 28px 64px;
+  }
+  .page { max-width: 1180px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #0f766e; font-weight: 800; }
+  h1 { margin: 6px 0 8px; font-size: 31px; letter-spacing: -.03em; }
+  .lede { margin: 0 0 30px; color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 760px; }
+  .palette {
+    --deep: #0b4f4a; --brand: #0f766e; --primary: #0b4f4a; --accent: #5eead4;
+    --highlight: #fbbf24; --ink: #0f1f33; --surface: #f4f6fb; --tile: #ffffff;
+    background: #fff; border: 1px solid var(--line); border-radius: 22px;
+    padding: 24px; margin-bottom: 22px; box-shadow: 0 18px 44px rgba(15,23,42,.05);
+  }
+  .palette.recommended { border: 2px solid var(--accent); box-shadow: 0 20px 50px rgba(15,23,42,.08); }
+  .p-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 20px; }
+  .p-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .p-tag.hot { color: var(--primary); }
+  h2 { margin: 5px 0 6px; font-size: 21px; letter-spacing: -.02em; }
+  .p-desc { margin: 0; color: var(--muted); font-size: 12.5px; line-height: 1.55; max-width: 540px; }
+  .swatches { display: flex; gap: 9px; flex-wrap: wrap; justify-content: flex-end; }
+  .swatch { width: 58px; }
+  .swatch i { display: block; height: 34px; border-radius: 9px; border: 1px solid rgba(15,23,42,.09); }
+  .swatch span { display: block; margin-top: 5px; font-size: 8.5px; font-weight: 700; letter-spacing: .02em; color: var(--muted); text-align: center; }
+  .swatch b { display: block; font-size: 8px; font-weight: 600; color: #94a3b8; text-align: center; }
+  .p-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .brand-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .brand-tile { border-radius: 16px; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 18px; }
+  .brand-tile.light { background: #f8fafc; border: 1px solid #eef2f6; }
+  .brand-tile.dark { background: var(--deep); }
+  .mark-lg { width: 88px; height: 88px; display: block; }
+  .mark-md { width: 58px; height: 58px; display: block; }
+  .mark-xs { width: 21px; height: 21px; display: block; }
+  .lockup { text-align: center; line-height: 1; }
+  .lockup .name { font-size: 24px; font-weight: 800; letter-spacing: .045em; }
+  .lockup .turn { color: var(--ink); }
+  .lockup .soft { color: var(--brand); }
+  .lockup .tagline { margin-top: 7px; font-size: 6.5px; font-weight: 800; letter-spacing: .22em; color: var(--muted); text-transform: uppercase; }
+  .dark .lockup .turn { color: #fff; }
+  .dark .lockup .soft { color: var(--accent); }
+  .dark .lockup .tagline { color: rgba(255,255,255,.55); }
+  .ui { border-radius: 16px; overflow: hidden; border: 1px solid #e7edf3; display: grid; grid-template-columns: 116px 1fr; min-height: 220px; background: var(--surface); }
+  .ui-side { background: var(--deep); padding: 14px 12px; display: flex; flex-direction: column; gap: 3px; }
+  .ui-brand { display: flex; align-items: center; gap: 7px; margin-bottom: 14px; }
+  .ui-brand strong { color: #fff; font-size: 10.5px; letter-spacing: .07em; }
+  .ui-nav { color: rgba(255,255,255,.62); font-size: 9.5px; padding: 6px 8px; border-radius: 6px; }
+  .ui-nav.active { color: #fff; background: rgba(255,255,255,.1); font-weight: 700; box-shadow: inset 2px 0 0 var(--accent); }
+  .ui-main { padding: 15px 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .ui-top { display: flex; justify-content: space-between; align-items: baseline; color: var(--ink); font-size: 12.5px; font-weight: 800; }
+  .ui-top small { font-size: 8.5px; font-weight: 600; color: var(--muted); }
+  .ui-btns { display: flex; gap: 7px; flex-wrap: wrap; }
+  .ui-btn { border: 0; border-radius: 7px; padding: 7px 10px; font: inherit; font-size: 9px; font-weight: 700; cursor: default; }
+  .ui-btn.primary { background: var(--primary); color: #fff; }
+  .ui-btn.ghost { background: #fff; color: var(--ink); border: 1px solid #dbe3ec; }
+  .ui-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ui-chip { font-size: 8px; font-weight: 800; padding: 4px 7px; border-radius: 999px; }
+  .ui-chip.ok { color: var(--primary); background: color-mix(in srgb, var(--accent) 24%, #fff); }
+  .ui-chip.warn { color: #8a5a05; background: color-mix(in srgb, var(--highlight) 22%, #fff); }
+  .ui-chip.neutral { color: var(--muted); background: #eef2f6; }
+  .ui-kpi { margin-top: auto; background: #fff; border: 1px solid #e8eef4; border-radius: 10px; padding: 10px 11px; }
+  .ui-kpi span { display: block; font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .ui-kpi strong { display: block; margin-top: 3px; font-size: 20px; letter-spacing: -.02em; color: var(--ink); }
+  .ui-kpi small { display: block; margin-top: 1px; font-size: 8.5px; color: var(--muted); }
+  .p-foot { display: flex; justify-content: space-between; gap: 16px; margin-top: 16px; padding-top: 14px; border-top: 1px solid #eef2f6; color: var(--muted); font-size: 11px; line-height: 1.5; }
+  .p-foot b { color: var(--ink); }
+  .recommendation { margin-top: 26px; padding: 18px 20px; border-radius: 16px; background: #fff; border: 1px solid var(--line); font-size: 12.5px; line-height: 1.65; color: var(--muted); }
+  .recommendation strong { color: var(--ink); }
+  @media (max-width: 980px) {
+    .p-head { flex-direction: column; }
+    .swatches { justify-content: flex-start; }
+    .p-body { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="quad" viewBox="0 0 64 64">
+    <rect width="64" height="64" rx="16" fill="var(--deep)"/>
+    <g fill="var(--tile)">
+      <rect x="14" y="14" width="15" height="15" rx="4.5"/>
+      <rect x="35" y="14" width="15" height="15" rx="4.5"/>
+      <rect x="14" y="35" width="15" height="15" rx="4.5"/>
+    </g>
+    <rect x="35" y="35" width="15" height="15" rx="4.5" fill="var(--accent)" transform="rotate(45 42.5 42.5)"/>
+    <circle cx="32" cy="32" r="2.2" fill="var(--highlight)"/>
+  </symbol>
+</svg>
+
+<div class="page">
+  <div class="eyebrow">Identidad visual · Marca Quadrant</div>
+  <h1>Color corporativo</h1>
+  <p class="lede">La marca ya está elegida. Ahora la decisión es el color. Cada tarjeta muestra la misma marca y un fragmento real de interfaz: barra lateral, botón principal, badges y KPI. La primera paleta es el sistema actual; las siguientes exploran tonos alternativos. Al final está la recomendación.</p>
+
+  <!-- ACTUAL -->
+  <article class="palette" style="--deep:#0b4f4a; --brand:#0f766e; --primary:#0b4f4a; --accent:#5eead4; --highlight:#fbbf24; --ink:#0f1f33; --surface:#f4f6fb; --tile:#ffffff;">
+    <div class="p-head">
+      <div>
+        <span class="p-tag">00 · Referencia</span>
+        <h2>Sistema actual</h2>
+        <p class="p-desc">Es la paleta que ya usa la aplicación. Teal profundo, menta y ámbar. Mantiene continuidad total con el panel actual.</p>
+      </div>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#0b4f4a"></i><span>Profundo</span><b>#0B4F4A</b></div>
+        <div class="swatch"><i style="background:#0f766e"></i><span>Marca</span><b>#0F766E</b></div>
+        <div class="swatch"><i style="background:#5eead4"></i><span>Acento</span><b>#5EEAD4</b></div>
+        <div class="swatch"><i style="background:#fbbf24"></i><span>Destacado</span><b>#FBBF24</b></div>
+        <div class="swatch"><i style="background:#0f1f33"></i><span>Tinta</span><b>#0F1F33</b></div>
+        <div class="swatch"><i style="background:#f4f6fb"></i><span>Superficie</span><b>#F4F6FB</b></div>
+      </div>
+    </div>
+    <div class="p-body">
+      <div class="brand-col">
+        <div class="brand-tile light">
+          <svg class="mark-lg" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+        <div class="brand-tile dark">
+          <svg class="mark-md" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+      </div>
+      <div class="ui">
+        <div class="ui-side">
+          <div class="ui-brand"><svg class="mark-xs" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg><strong>TURNSOFT</strong></div>
+          <div class="ui-nav active">Panel</div><div class="ui-nav">Horario</div><div class="ui-nav">Personal</div><div class="ui-nav">Reportes</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-top">Panel de control <small>Noviembre 2026</small></div>
+          <div class="ui-btns"><button class="ui-btn primary">Generar horario</button><button class="ui-btn ghost">Ver horario</button></div>
+          <div class="ui-chips"><span class="ui-chip ok">Cumple</span><span class="ui-chip warn">Revisar 2</span><span class="ui-chip neutral">Borrador</span></div>
+          <div class="ui-kpi"><span>Cobertura de cupos</span><strong>98,4%</strong><small>+2,1 pts vs. período anterior</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot"><span><b>Uso:</b> continuidad inmediata, sin tocar el CSS existente.</span><span><b>Riesgo:</b> baja diferenciación frente a otros SaaS verdes.</span></div>
+  </article>
+
+  <!-- JADE -->
+  <article class="palette recommended" style="--deep:#083b36; --brand:#0f766e; --primary:#0b4f4a; --accent:#2dd4bf; --highlight:#f2b84b; --ink:#0b1f1c; --surface:#f4f8f7; --tile:#ffffff;">
+    <div class="p-head">
+      <div>
+        <span class="p-tag hot">01 · Recomendada</span>
+        <h2>Jade profundo</h2>
+        <p class="p-desc">La evolución natural del sistema actual: fondo más profundo, tinta ligeramente verde y un ámbar más cálido. Se siente más editorial y legal, sin romper la identidad.</p>
+      </div>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#083b36"></i><span>Profundo</span><b>#083B36</b></div>
+        <div class="swatch"><i style="background:#0f766e"></i><span>Marca</span><b>#0F766E</b></div>
+        <div class="swatch"><i style="background:#2dd4bf"></i><span>Acento</span><b>#2DD4BF</b></div>
+        <div class="swatch"><i style="background:#f2b84b"></i><span>Destacado</span><b>#F2B84B</b></div>
+        <div class="swatch"><i style="background:#0b1f1c"></i><span>Tinta</span><b>#0B1F1C</b></div>
+        <div class="swatch"><i style="background:#f4f8f7"></i><span>Superficie</span><b>#F4F8F7</b></div>
+      </div>
+    </div>
+    <div class="p-body">
+      <div class="brand-col">
+        <div class="brand-tile light">
+          <svg class="mark-lg" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+        <div class="brand-tile dark">
+          <svg class="mark-md" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+      </div>
+      <div class="ui">
+        <div class="ui-side">
+          <div class="ui-brand"><svg class="mark-xs" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg><strong>TURNSOFT</strong></div>
+          <div class="ui-nav active">Panel</div><div class="ui-nav">Horario</div><div class="ui-nav">Personal</div><div class="ui-nav">Reportes</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-top">Panel de control <small>Noviembre 2026</small></div>
+          <div class="ui-btns"><button class="ui-btn primary">Generar horario</button><button class="ui-btn ghost">Ver horario</button></div>
+          <div class="ui-chips"><span class="ui-chip ok">Cumple</span><span class="ui-chip warn">Revisar 2</span><span class="ui-chip neutral">Borrador</span></div>
+          <div class="ui-kpi"><span>Cobertura de cupos</span><strong>98,4%</strong><small>+2,1 pts vs. período anterior</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot"><span><b>Uso:</b> marca, login, sidebar y documentos legales.</span><span><b>Contraste:</b> blanco sobre profundo y menta sobre profundo, ambos altos.</span></div>
+  </article>
+
+  <!-- AZUL -->
+  <article class="palette" style="--deep:#0a1f3c; --brand:#1e40af; --primary:#1e40af; --accent:#5eead4; --highlight:#fbbf24; --ink:#0b1220; --surface:#f3f6fb; --tile:#ffffff;">
+    <div class="p-head">
+      <div>
+        <span class="p-tag">02 · Alternativa institucional</span>
+        <h2>Azul institucional</h2>
+        <p class="p-desc">Azul marino con menta. Transmite banca, cumplimiento y confianza legal. Es la opción más corporativa y la que más se separa del verde de la competencia.</p>
+      </div>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#0a1f3c"></i><span>Profundo</span><b>#0A1F3C</b></div>
+        <div class="swatch"><i style="background:#1e40af"></i><span>Marca</span><b>#1E40AF</b></div>
+        <div class="swatch"><i style="background:#5eead4"></i><span>Acento</span><b>#5EEAD4</b></div>
+        <div class="swatch"><i style="background:#fbbf24"></i><span>Destacado</span><b>#FBBF24</b></div>
+        <div class="swatch"><i style="background:#0b1220"></i><span>Tinta</span><b>#0B1220</b></div>
+        <div class="swatch"><i style="background:#f3f6fb"></i><span>Superficie</span><b>#F3F6FB</b></div>
+      </div>
+    </div>
+    <div class="p-body">
+      <div class="brand-col">
+        <div class="brand-tile light">
+          <svg class="mark-lg" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+        <div class="brand-tile dark">
+          <svg class="mark-md" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+      </div>
+      <div class="ui">
+        <div class="ui-side">
+          <div class="ui-brand"><svg class="mark-xs" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg><strong>TURNSOFT</strong></div>
+          <div class="ui-nav active">Panel</div><div class="ui-nav">Horario</div><div class="ui-nav">Personal</div><div class="ui-nav">Reportes</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-top">Panel de control <small>Noviembre 2026</small></div>
+          <div class="ui-btns"><button class="ui-btn primary">Generar horario</button><button class="ui-btn ghost">Ver horario</button></div>
+          <div class="ui-chips"><span class="ui-chip ok">Cumple</span><span class="ui-chip warn">Revisar 2</span><span class="ui-chip neutral">Borrador</span></div>
+          <div class="ui-kpi"><span>Cobertura de cupos</span><strong>98,4%</strong><small>+2,1 pts vs. período anterior</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot"><span><b>Uso:</b> si el foco es el cumplimiento legal y la venta a grandes cuentas.</span><span><b>Contraste:</b> muy alto; el menta aporta el sello tecnológico.</span></div>
+  </article>
+
+  <!-- BOSQUE -->
+  <article class="palette" style="--deep:#0e2f2a; --brand:#1f6f5c; --primary:#1f6f5c; --accent:#d98e5f; --highlight:#e9c46a; --ink:#17211f; --surface:#f7f4ef; --tile:#fffdf8;">
+    <div class="p-head">
+      <div>
+        <span class="p-tag">03 · Alternativa cálida</span>
+        <h2>Bosque y cobre</h2>
+        <p class="p-desc">Verde bosque con cobre y arena. Es la paleta con más sello chileno: minería, tierra y operación en terreno. Cálida, premium y menos “software genérico”.</p>
+      </div>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#0e2f2a"></i><span>Profundo</span><b>#0E2F2A</b></div>
+        <div class="swatch"><i style="background:#1f6f5c"></i><span>Marca</span><b>#1F6F5C</b></div>
+        <div class="swatch"><i style="background:#d98e5f"></i><span>Acento</span><b>#D98E5F</b></div>
+        <div class="swatch"><i style="background:#e9c46a"></i><span>Destacado</span><b>#E9C46A</b></div>
+        <div class="swatch"><i style="background:#17211f"></i><span>Tinta</span><b>#17211F</b></div>
+        <div class="swatch"><i style="background:#f7f4ef"></i><span>Superficie</span><b>#F7F4EF</b></div>
+      </div>
+    </div>
+    <div class="p-body">
+      <div class="brand-col">
+        <div class="brand-tile light" style="background:#faf7f1; border-color:#eee5d8">
+          <svg class="mark-lg" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+        <div class="brand-tile dark">
+          <svg class="mark-md" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+      </div>
+      <div class="ui">
+        <div class="ui-side">
+          <div class="ui-brand"><svg class="mark-xs" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg><strong>TURNSOFT</strong></div>
+          <div class="ui-nav active">Panel</div><div class="ui-nav">Horario</div><div class="ui-nav">Personal</div><div class="ui-nav">Reportes</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-top">Panel de control <small>Noviembre 2026</small></div>
+          <div class="ui-btns"><button class="ui-btn primary">Generar horario</button><button class="ui-btn ghost">Ver horario</button></div>
+          <div class="ui-chips"><span class="ui-chip ok">Cumple</span><span class="ui-chip warn">Revisar 2</span><span class="ui-chip neutral">Borrador</span></div>
+          <div class="ui-kpi"><span>Cobertura de cupos</span><strong>98,4%</strong><small>+2,1 pts vs. período anterior</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot"><span><b>Uso:</b> si quieren un posicionamiento chileno y cercano a minería/logística.</span><span><b>Contraste:</b> alto en texto; el cobre funciona mejor como acento, no como texto pequeño.</span></div>
+  </article>
+
+  <!-- GRAFITO -->
+  <article class="palette" style="--deep:#111827; --brand:#0e7490; --primary:#0e7490; --accent:#67e8f9; --highlight:#f59e0b; --ink:#0f172a; --surface:#f3f6f9; --tile:#ffffff;">
+    <div class="p-head">
+      <div>
+        <span class="p-tag">04 · Alternativa neutra</span>
+        <h2>Grafito y turquesa</h2>
+        <p class="p-desc">Grafito casi negro con turquesa cian. Es la más tecnológica y neutra: el color no compite con los sectores (salud, retail, minería, logística) y el fondo oscuro hace brillar la marca.</p>
+      </div>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#111827"></i><span>Profundo</span><b>#111827</b></div>
+        <div class="swatch"><i style="background:#0e7490"></i><span>Marca</span><b>#0E7490</b></div>
+        <div class="swatch"><i style="background:#67e8f9"></i><span>Acento</span><b>#67E8F9</b></div>
+        <div class="swatch"><i style="background:#f59e0b"></i><span>Destacado</span><b>#F59E0B</b></div>
+        <div class="swatch"><i style="background:#0f172a"></i><span>Tinta</span><b>#0F172A</b></div>
+        <div class="swatch"><i style="background:#f3f6f9"></i><span>Superficie</span><b>#F3F6F9</b></div>
+      </div>
+    </div>
+    <div class="p-body">
+      <div class="brand-col">
+        <div class="brand-tile light">
+          <svg class="mark-lg" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+        <div class="brand-tile dark">
+          <svg class="mark-md" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg>
+          <div class="lockup"><div class="name"><span class="turn">TURN</span><span class="soft">SOFT</span></div><div class="tagline">Turnos legales para Chile</div></div>
+        </div>
+      </div>
+      <div class="ui">
+        <div class="ui-side">
+          <div class="ui-brand"><svg class="mark-xs" viewBox="0 0 64 64" aria-hidden="true"><use href="#quad"/></svg><strong>TURNSOFT</strong></div>
+          <div class="ui-nav active">Panel</div><div class="ui-nav">Horario</div><div class="ui-nav">Personal</div><div class="ui-nav">Reportes</div>
+        </div>
+        <div class="ui-main">
+          <div class="ui-top">Panel de control <small>Noviembre 2026</small></div>
+          <div class="ui-btns"><button class="ui-btn primary">Generar horario</button><button class="ui-btn ghost">Ver horario</button></div>
+          <div class="ui-chips"><span class="ui-chip ok">Cumple</span><span class="ui-chip warn">Revisar 2</span><span class="ui-chip neutral">Borrador</span></div>
+          <div class="ui-kpi"><span>Cobertura de cupos</span><strong>98,4%</strong><small>+2,1 pts vs. período anterior</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot"><span><b>Uso:</b> si la marca debe verse transversal a todos los sectores.</span><span><b>Contraste:</b> excelente; el cian es muy legible sobre grafito.</span></div>
+  </article>
+
+  <div class="recommendation">
+    <strong>Mi recomendación:</strong> partir con <b>Jade profundo</b> porque conserva la identidad que ya está aprobada y solo la vuelve más precisa. Si el objetivo es vender a grandes cuentas y enfatizar cumplimiento, <b>Azul institucional</b> es la mejor apuesta. <b>Bosque y cobre</b> es la más diferenciadora para Chile, pero exige revisar todos los estados de la interfaz para que el cobre no se confunda con una alerta. <b>Grafito y turquesa</b> es la más segura para un producto multi-sector. Dime con cuál seguimos y preparo el brand board final + la aplicación en la app.
+  </div>
+</div>
+</body>
+</html>

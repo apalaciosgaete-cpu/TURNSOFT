@@ -9,7 +9,12 @@ function httpError(status, message) {
 /** Un usuario sin cliente asignado es operador (incluye tokens legacy). */
 function isOperator(user) {
   if (!user) return false;
+  if (user.rol === 'superadmin') return false;
   return !user.cliente_id || user.rol === 'operador' || user.rol === 'admin';
+}
+
+function isSuperadmin(user) {
+  return Boolean(user && user.rol === 'superadmin');
 }
 
 /**
@@ -58,12 +63,21 @@ function requireOperator(req, res, next) {
   next();
 }
 
+function requireSuperadmin(req, res, next) {
+  if (!isSuperadmin(req.user)) {
+    return res.status(403).json({ error: 'Esta acción requiere la cuenta de supervisor maestro.' });
+  }
+  next();
+}
+
 module.exports = {
   isOperator,
+  isSuperadmin,
   scopedClienteId,
   scopedEmpresaId,
   assertClienteAccess,
   assertEmpresaAccess,
   requireOperator,
+  requireSuperadmin,
   httpError,
 };

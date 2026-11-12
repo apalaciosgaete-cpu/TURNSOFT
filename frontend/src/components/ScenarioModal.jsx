@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Building2 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
-import { DEMO_START_DATE } from '@shared/demo.js';
+import { todayISO } from '@shared/dates.js';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import { Button, Field, Modal, SectorIcon } from './ui.jsx';
 
@@ -19,7 +19,7 @@ function emptyForm(client) {
     name: '',
     company: client?.legalName || client?.name || '',
     location: clientLocation(client),
-    startDate: DEMO_START_DATE,
+    startDate: todayISO(),
     days: sector === 'seguridad' ? 32 : 28,
     notes: '',
   };
@@ -133,7 +133,7 @@ export function ScenarioModal({ open, onClose, scenario = null, initialClientId 
       subtitle={
         scenario
           ? 'Si cambias el período, el horario se reinicia.'
-          : 'El escenario queda asociado a un cliente y usa su dotación de ejemplo.'
+          : 'El escenario queda asociado a un cliente y parte con la dotación que definas.'
       }
       footer={
         <>
@@ -195,7 +195,7 @@ export function ScenarioModal({ open, onClose, scenario = null, initialClientId 
         </Field>
 
         <Field label="Empresa u organización">
-          <input className="input" value={form.company} onChange={(event) => set('company', event.target.value)} placeholder="Vigo Seguridad SpA" />
+          <input className="input" value={form.company} onChange={(event) => set('company', event.target.value)} placeholder="Mi Empresa SpA" />
         </Field>
 
         <Field label="Ubicación">

@@ -1,7 +1,9 @@
-import { Link, Route, Routes } from 'react-router-dom';
+import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout.jsx';
+import { MasterLayout } from './components/MasterLayout.jsx';
 import { LoginScreen } from './components/LoginScreen.jsx';
 import { useAuth } from './store/AuthContext.jsx';
+import { MasterProvider } from './store/MasterContext.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Schedule from './pages/Schedule.jsx';
 import Staff from './pages/Staff.jsx';
@@ -10,6 +12,12 @@ import Rules from './pages/Rules.jsx';
 import Legal from './pages/Legal.jsx';
 import Reports from './pages/Reports.jsx';
 import Clients from './pages/Clients.jsx';
+import Support from './pages/Support.jsx';
+import MasterOverview from './pages/MasterOverview.jsx';
+import MasterCompanies from './pages/MasterCompanies.jsx';
+import MasterPayments from './pages/MasterPayments.jsx';
+import MasterPlans from './pages/MasterPlans.jsx';
+import MasterSupport from './pages/MasterSupport.jsx';
 
 function NotFound() {
   return (
@@ -25,9 +33,26 @@ function NotFound() {
 }
 
 export default function App() {
-  const { session } = useAuth();
+  const { session, isSuperadmin } = useAuth();
 
   if (!session) return <LoginScreen />;
+
+  if (isSuperadmin) {
+    return (
+      <MasterProvider>
+        <Routes>
+          <Route element={<MasterLayout />}>
+            <Route path="master" element={<MasterOverview />} />
+            <Route path="master/empresas" element={<MasterCompanies />} />
+            <Route path="master/pagos" element={<MasterPayments />} />
+            <Route path="master/planes" element={<MasterPlans />} />
+            <Route path="master/soporte" element={<MasterSupport />} />
+            <Route path="*" element={<Navigate to="/master" replace />} />
+          </Route>
+        </Routes>
+      </MasterProvider>
+    );
+  }
 
   return (
     <Routes>
@@ -40,6 +65,7 @@ export default function App() {
         <Route path="reportes" element={<Reports />} />
         <Route path="legal" element={<Legal />} />
         <Route path="clientes" element={<Clients />} />
+        <Route path="soporte" element={<Support />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -7,17 +7,10 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createDemoScenarios } from '@shared/demo.js';
-import {
-  CLIENTS,
-  OPERATOR,
-  createTenantDemoState,
-  getClientById,
-} from '@shared/tenants.js';
 import { generateSchedule } from '@shared/engine.js';
 import { validateSchedule } from '@shared/validate.js';
 import { buildConfigFingerprint, shiftCertificationsOk, hasCertification } from '@shared/model.js';
-import { getSectorRules, getSectorShifts } from '@shared/presets.js';
+import { SECTOR_ENGINE_PRESETS, getSectorRules, getSectorShifts } from '@shared/presets.js';
 import { addDays, eachDate, formatDateShort, todayISO, uid } from '@shared/dates.js';
 import {
   detachExceptionsForCell,
@@ -26,7 +19,7 @@ import {
 } from '@shared/exceptions.js';
 import { useAuth } from './AuthContext.jsx';
 
-const STORAGE_KEY = 'turnsoft.tenants.v3';
+const STORAGE_PREFIX = 'turnsoft.workspace.v4';
 const EMPLOYEE_COLORS = ['#0f766e', '#0284c7', '#7c3aed', '#db2777', '#b45309', '#059669', '#dc2626', '#475569', '#4338ca', '#0e7490'];
 
 const TurnsoftContext = createContext(null);
@@ -47,27 +40,64 @@ function bumpScheduleMeta(schedule, edits = 1) {
 }
 
 function createFreshState() {
-  return createTenantDemoState();
+  return {
+    version: 4,
+    operator: null,
+    clients: [],
+    scenarios: [],
+    activeScenarioId: null,
+    activeClientId: null,
+  };
 }
 
-function loadState() {
-  if (typeof window === 'undefined') return createFreshState();
+function storageKeyFor(session) {
+  if (!session) return null;
+  return `${STORAGE_PREFIX}:${session.role}:${session.clientId || 'operador'}`;
+}
+
+/**
+ * Un usuario cliente nunca conserva en su navegador escenarios de otros
+ * clientes: el estado se recorta al cliente de la sesión antes de guardarse.
+ */
+function scopeState(state, session) {
+  if (!session || session.role === 'operador') return state;
+  const scenarios = state.scenarios.filter(
+    (scenario) => scenario.clientId === session.clientId
+  );
+  return {
+    ...state,
+    scenarios,
+    activeScenarioId: scenarios.some((scenario) => scenario.id === state.activeScenarioId)
+      ? state.activeScenarioId
+      : scenarios[0]?.id || null,
+    activeClientId: session.clientId,
+  };
+}
+
+function loadState(session) {
+  const fresh = createFreshState();
+  const key = storageKeyFor(session);
+  if (typeof window === 'undefined' || !key) return fresh;
+
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return createFreshState();
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fresh;
     const parsed = JSON.parse(raw);
-    if (
-      !parsed ||
-      parsed.version !== 3 ||
-      !Array.isArray(parsed.clients) ||
-      !Array.isArray(parsed.scenarios) ||
-      parsed.scenarios.length === 0
-    ) {
-      return createFreshState();
+    if (!parsed || parsed.version !== 4 || !Array.isArray(parsed.scenarios)) {
+      return fresh;
     }
-    return { ...createFreshState(), ...parsed };
+
+    const merged = scopeState({ ...fresh, ...parsed }, session);
+    return {
+      ...merged,
+      activeScenarioId: merged.scenarios.some(
+        (scenario) => scenario.id === merged.activeScenarioId
+      )
+        ? merged.activeScenarioId
+        : merged.scenarios[0]?.id || null,
+    };
   } catch {
-    return createFreshState();
+    return fresh;
   }
 }
 
@@ -78,20 +108,26 @@ function scenarioVisibleTo(scenario, session, isOperator, activeClientId) {
 }
 
 export function TurnsoftProvider({ children }) {
-  const { session, isOperator, activeClientId } = useAuth();
-  const [state, setState] = useState(loadState);
+  const { session, isOperator, activeClientId, clients } = useAuth();
+  const [state, setState] = useState(() => loadState(session));
   const [busyScenarioId, setBusyScenarioId] = useState(null);
   const [notice, setNotice] = useState(null);
   const noticeTimer = useRef(null);
   const generateTimer = useRef(null);
 
   useEffect(() => {
+    setState(loadState(session));
+  }, [session?.role, session?.clientId]);
+
+  useEffect(() => {
+    const key = storageKeyFor(session);
+    if (!key) return;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      window.localStorage.setItem(key, JSON.stringify(state));
     } catch {
       // Sin espacio o almacenamiento bloqueado: la app sigue funcionando en memoria.
     }
-  }, [state]);
+  }, [state, session]);
 
   useEffect(() => () => {
     if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
@@ -146,15 +182,15 @@ export function TurnsoftProvider({ children }) {
 
   const visibleClients = useMemo(() => {
     if (!session) return [];
-    if (isOperator) return CLIENTS;
-    return CLIENTS.filter((client) => client.id === session.clientId);
-  }, [session, isOperator]);
+    if (isOperator) return clients;
+    return clients.filter((client) => client.id === session.clientId);
+  }, [session, isOperator, clients]);
 
   const activeClient = useMemo(() => {
     if (!session) return null;
-    if (isOperator) return getClientById(activeClientId);
-    return getClientById(session.clientId);
-  }, [session, isOperator, activeClientId]);
+    const targetId = isOperator ? activeClientId : session.clientId;
+    return clients.find((client) => client.id === targetId) || null;
+  }, [session, isOperator, activeClientId, clients]);
 
   const clientSummaries = useMemo(
     () =>
@@ -879,22 +915,19 @@ export function TurnsoftProvider({ children }) {
       const targetClientId = isOperator
         ? requestedClientId || activeClientId || null
         : session.clientId;
-      const client = getClientById(targetClientId);
+      const client = clients.find((item) => item.id === targetClientId);
       if (!client) {
         notify('Selecciona un cliente antes de crear el escenario.', 'error');
         return null;
       }
 
-      const templates = createDemoScenarios();
-      const template = templates.find((item) => item.sector === data.sector) || templates[0];
-      const scenario = clone(template);
+      const sector = data.sector || client.sector || 'seguridad';
+      const engine = SECTOR_ENGINE_PRESETS[sector] || SECTOR_ENGINE_PRESETS.logistica;
       const id = uid('sc');
-      const days = Number(data.days) || template.days;
-      const startDate = data.startDate || template.startDate;
+      const days = Number(data.days) || (sector === 'seguridad' ? 32 : 28);
+      const startDate = data.startDate || todayISO();
       const location =
-        data.location ||
-        [client.address, client.city].filter(Boolean).join(', ') ||
-        template.location;
+        data.location || [client.address, client.city].filter(Boolean).join(', ') || '';
 
       setState((previous) => ({
         ...previous,
@@ -902,19 +935,27 @@ export function TurnsoftProvider({ children }) {
         scenarios: [
           ...previous.scenarios,
           {
-            ...scenario,
             id,
             name: data.name?.trim() || `Operación ${client.name}`,
             company: data.company?.trim() || client.legalName || client.name,
             location,
+            sector,
             clientId: client.id,
             clientName: client.name,
-            operatorName: OPERATOR.name,
+            operatorName: session.empresa || '',
             startDate,
             endDate: addDays(startDate, days - 1),
             days,
+            employees: [],
+            shifts: getSectorShifts(sector),
+            rules: getSectorRules(sector),
+            holidays: [],
+            regions: [],
             schedule: null,
             exceptions: [],
+            pattern: engine.pattern,
+            continuityBias: engine.continuityBias,
+            notes: data.notes || '',
             createdAt: new Date().toISOString(),
           },
         ],
@@ -922,7 +963,7 @@ export function TurnsoftProvider({ children }) {
       notify(`Escenario creado para ${client.name}. Ajusta la dotación y genera el horario.`, 'info');
       return id;
     },
-    [session, isOperator, activeClientId, notify]
+    [session, isOperator, activeClientId, clients, notify]
   );
 
   const duplicateScenario = useCallback(
@@ -981,15 +1022,6 @@ export function TurnsoftProvider({ children }) {
     [findOwned, notify, session, isOperator, activeClientId]
   );
 
-  const resetDemo = useCallback(() => {
-    if (!isOperator) {
-      notify('Solo el operador puede restaurar los datos demo de la operación.', 'error');
-      return;
-    }
-    setState(createFreshState());
-    notify('Datos demo restaurados.', 'info');
-  }, [isOperator, notify]);
-
   const isStale = useCallback((scenario) => {
     if (!scenario?.schedule) return false;
     return scenario.schedule.meta?.fingerprint !== buildConfigFingerprint(scenario);
@@ -1043,7 +1075,6 @@ export function TurnsoftProvider({ children }) {
       addScenario,
       duplicateScenario,
       deleteScenario,
-      resetDemo,
       isStale,
       validationFor,
       sectorShifts: getSectorShifts,
@@ -1085,7 +1116,6 @@ export function TurnsoftProvider({ children }) {
       addScenario,
       duplicateScenario,
       deleteScenario,
-      resetDemo,
       isStale,
       validationFor,
       visibleClients,

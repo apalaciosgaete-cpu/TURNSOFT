@@ -79,6 +79,28 @@ router.post('/', authenticateToken, requireOperator, async (req, res) => {
     if (!req.body.nombre) {
       return res.status(400).json({ error: 'El nombre del cliente es requerido.' });
     }
+
+    const limitResult = await pool.query(
+      `SELECT p.max_clientes
+       FROM empresas e
+       LEFT JOIN planes p ON p.id = e.plan_id
+       WHERE e.id = $1`,
+      [empresaId]
+    );
+    const planLimit = limitResult.rows[0]?.max_clientes;
+    if (planLimit !== null && planLimit !== undefined) {
+      const countResult = await pool.query(
+        'SELECT count(*)::int AS total FROM clientes WHERE empresa_id = $1',
+        [empresaId]
+      );
+      if (countResult.rows[0].total >= planLimit) {
+        return res.status(403).json({
+          error: `Tu plan permite hasta ${planLimit} clientes. Amplía el plan para agregar más.`,
+          code: 'PLAN_LIMIT',
+        });
+      }
+    }
+
     const result = await pool.query(
       `INSERT INTO clientes
          (empresa_id, nombre, razon_social, rut, sector, contacto, email, telefono,

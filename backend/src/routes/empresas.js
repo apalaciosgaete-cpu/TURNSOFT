@@ -4,6 +4,7 @@ const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const {
   requireOperator,
+  requireSuperadmin,
   assertEmpresaAccess,
   scopedEmpresaId,
 } = require('../middleware/tenant');
@@ -49,8 +50,8 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Crear empresa. Solo el operador puede dar de alta una empresa.
-router.post('/', authenticateToken, requireOperator, async (req, res) => {
+// Crear empresa. Solo el supervisor maestro puede dar de alta una empresa.
+router.post('/', authenticateToken, requireSuperadmin, async (req, res) => {
   const client = await pool.connect();
   try {
     const {

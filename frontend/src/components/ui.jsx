@@ -29,7 +29,7 @@ export const SEVERITY = {
 export function SectorIcon({ sector, meta, size = 20 }) {
   const Icon = SECTOR_ICONS[meta?.icon] || ShieldCheck;
   return (
-    <span className="sector-icon" style={{ '--sector-color': meta?.accent || '#0f766e', '--sector-tint': meta?.tint || '#e7f8f0' }}>
+    <span className="sector-icon" style={{ '--sector-color': meta?.accent || '#1d4ed8', '--sector-tint': meta?.tint || '#e8efff' }}>
       <Icon size={size} strokeWidth={2.1} />
     </span>
   );
@@ -98,7 +98,7 @@ export function Badge({ children, tone = 'neutral', dot = false, className = '' 
   );
 }
 
-export function Ring({ value, label, tone = '#0f766e', size = 128 }) {
+export function Ring({ value, label, tone = '#1d4ed8', size = 128 }) {
   const safe = Math.max(0, Math.min(100, Number(value) || 0));
   return (
     <div
@@ -247,7 +247,7 @@ export function Avatar({ name, color, size = 34 }) {
   return (
     <span
       className="avatar"
-      style={{ width: size, height: size, background: color || '#0f766e', fontSize: size * 0.34 }}
+      style={{ width: size, height: size, background: color || '#1d4ed8', fontSize: size * 0.34 }}
       aria-hidden="true"
     >
       {initials}

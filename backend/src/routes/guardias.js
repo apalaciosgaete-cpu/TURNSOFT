@@ -65,6 +65,27 @@ router.post('/', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'empresa_id, nombre_completo y rut son requeridos.' });
     }
 
+    const limitResult = await pool.query(
+      `SELECT p.max_guardias
+       FROM empresas e
+       LEFT JOIN planes p ON p.id = e.plan_id
+       WHERE e.id = $1`,
+      [empresaId]
+    );
+    const planLimit = limitResult.rows[0]?.max_guardias;
+    if (planLimit !== null && planLimit !== undefined) {
+      const countResult = await pool.query(
+        'SELECT count(*)::int AS total FROM guardias WHERE empresa_id = $1',
+        [empresaId]
+      );
+      if (countResult.rows[0].total >= planLimit) {
+        return res.status(403).json({
+          error: `Tu plan permite hasta ${planLimit} guardias. Amplía el plan para agregar más.`,
+          code: 'PLAN_LIMIT',
+        });
+      }
+    }
+
     const result = await pool.query(
       `INSERT INTO guardias
          (empresa_id, cliente_id, nombre_completo, rut, email, telefono,

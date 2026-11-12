@@ -27,6 +27,8 @@ app.use('/api/motor', require('./routes/motor'));
 app.use('/api/horarios', require('./routes/horarios'));
 app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/reportes', require('./routes/reportes'));
+app.use('/api/soporte', require('./routes/soporte'));
+app.use('/api/master', require('./routes/master'));
 app.use('/api/auth', require('./routes/auth'));
 
 // Ruta de salud

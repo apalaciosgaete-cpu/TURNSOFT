@@ -8,13 +8,13 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Headphones,
   Info,
   LayoutDashboard,
   LogOut,
   Menu,
   Plus,
   RefreshCw,
-  RotateCcw,
   Scale,
   ShieldAlert,
   Sparkles,
@@ -27,6 +27,7 @@ import { formatRange } from '@shared/dates.js';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import { Badge, Button, SectorIcon } from './ui.jsx';
+import { BrandMark } from './Brand.jsx';
 import { ScenarioModal } from './ScenarioModal.jsx';
 
 const PAGE_META = {
@@ -38,6 +39,7 @@ const PAGE_META = {
   '/reportes': { title: 'Reportes', subtitle: 'Métricas de cumplimiento, hallazgos y exportación.' },
   '/legal': { title: 'Base legal', subtitle: 'Fuentes, hitos de jornada y criterios aplicados en Chile.' },
   '/clientes': { title: 'Clientes', subtitle: 'Cuentas bajo la operación, aislamiento y acceso a cada servicio.' },
+  '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con TURNSOFT.' },
 };
 
 const NOTICE_ICONS = { success: CheckCircle2, error: AlertTriangle, info: Info };
@@ -53,7 +55,6 @@ export function Layout() {
     busyScenarioId,
     notice,
     dismissNotice,
-    resetDemo,
   } = useTurnsoft();
   const {
     session,
@@ -105,6 +106,10 @@ export function Layout() {
         { to: '/legal', label: 'Base legal', icon: BookOpen },
       ],
     },
+    {
+      label: 'Ayuda',
+      items: [{ to: '/soporte', label: 'Soporte', icon: Headphones }],
+    },
   ];
 
   useEffect(() => {
@@ -122,16 +127,16 @@ export function Layout() {
     <div
       className="app-shell"
       style={{
-        '--accent': sector?.accent || '#0f766e',
-        '--accent-tint': sector?.tint || '#e7f8f0',
+        '--accent': sector?.accent || '#1d4ed8',
+        '--accent-tint': sector?.tint || '#e8efff',
       }}
     >
       <aside className={`sidebar ${mobileOpen ? 'is-open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-mark">TS</div>
+          <BrandMark size={42} className="brand-mark" />
           <div className="brand-copy">
             <strong>TURNSOFT</strong>
-            <span>Turnos legales para Chile</span>
+            <span>Turnos para Chile</span>
           </div>
           <button type="button" className="sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
             <X size={20} />
@@ -260,27 +265,13 @@ export function Layout() {
             </div>
           )}
 
-          {isOperator ? (
-            <button
-              type="button"
-              className="sidebar-reset"
-              onClick={() => {
-                if (window.confirm('¿Restaurar los escenarios demo de los ocho clientes? Se perderán los cambios locales.')) {
-                  resetDemo();
-                }
-              }}
-            >
-              <RotateCcw size={14} /> Restaurar datos demo
-            </button>
-          ) : null}
-
           <div className="sidebar-account">
             <span className="account-avatar">{session?.initials || 'TS'}</span>
             <div className="account-copy">
               <strong>{session?.name}</strong>
               <span>
                 {isOperator
-                  ? 'Operador · Vigo Seguridad'
+                  ? `Operador · ${session?.empresa || 'Mi empresa'}`
                   : `Cliente · ${activeClient?.name || session?.clientName}`}
               </span>
             </div>
@@ -331,15 +322,17 @@ export function Layout() {
           </div>
           <div className="topbar-actions">
             <span className="topbar-sub">{meta.subtitle}</span>
-            <Button
-              variant="primary"
-              icon={busy ? RefreshCw : Sparkles}
-              onClick={() => generate(activeScenarioId)}
-              disabled={busy || !activeScenario}
-              className={busy ? 'is-busy' : ''}
-            >
-              {busy ? 'Generando…' : activeScenario?.schedule ? 'Regenerar horario' : 'Generar horario'}
-            </Button>
+            {location.pathname === '/soporte' ? null : (
+              <Button
+                variant="primary"
+                icon={busy ? RefreshCw : Sparkles}
+                onClick={() => generate(activeScenarioId)}
+                disabled={busy || !activeScenario}
+                className={busy ? 'is-busy' : ''}
+              >
+                {busy ? 'Generando…' : activeScenario?.schedule ? 'Regenerar horario' : 'Generar horario'}
+              </Button>
+            )}
           </div>
         </header>
 
