@@ -8,6 +8,9 @@ const {
   expireTrialIfNeeded,
 } = require('../middleware/auth');
 const { hashPassword, verifyPassword } = require('../utils/password');
+const { getJwtSecret, JWT_ALGORITHM } = require('../config/jwt');
+const { checkSetupToken } = require('../utils/setupToken');
+const rateLimits = require('../middleware/rateLimit');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,8 +26,8 @@ function signToken(user) {
       cliente_nombre: user.cliente_nombre || null,
       empresa_nombre: user.empresa_nombre || null,
     },
-    process.env.JWT_SECRET || 'secret_dev',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    getJwtSecret(),
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h', algorithm: JWT_ALGORITHM }
   );
 }
 
@@ -54,23 +57,34 @@ function clean(value, max = 200) {
   return String(value || '').trim().slice(0, max);
 }
 
-async function userCount(client = pool) {
-  const result = await client.query('SELECT count(*)::int AS total FROM usuarios');
-  return result.rows[0]?.total || 0;
+/**
+ * La configuración inicial depende de que exista un supervisor maestro, no de
+ * que haya usuarios: una empresa registrada antes del setup no debe bloquearlo.
+ */
+async function userStats(client = pool) {
+  const result = await client.query(
+    `SELECT count(*)::int AS total,
+            count(*) FILTER (WHERE rol = 'superadmin')::int AS superadmins
+     FROM usuarios`
+  );
+  return {
+    total: result.rows[0]?.total || 0,
+    superadmins: result.rows[0]?.superadmins || 0,
+  };
 }
 
 /**
- * Estado público del arranque. Si todavía no existe ningún usuario, el frontend
- * muestra la pantalla de configuración inicial en lugar del login.
+ * Estado público del arranque. Si todavía no existe un supervisor maestro, el
+ * frontend muestra la pantalla de configuración inicial en lugar del login.
  */
 router.get('/bootstrap', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
-    const total = await userCount();
+    const stats = await userStats();
     res.json({
       app: 'TURNSOFT',
-      needsSetup: total === 0,
-      userCount: total,
+      needsSetup: stats.superadmins === 0,
+      userCount: stats.total,
     });
   } catch (error) {
     // Sin esquema o sin base, el frontend debe poder mostrar el login normal.
@@ -87,7 +101,14 @@ router.get('/bootstrap', async (req, res) => {
  * Es global, no pertenece a una empresa. Las empresas se registran desde la
  * página pública y este rol solo supervisa ocupación, pagos, planes y soporte.
  */
-router.post('/setup', async (req, res) => {
+router.post('/setup', rateLimits.setup, async (req, res) => {
+  const authorization = checkSetupToken(
+    req.headers['x-setup-token'] || req.body?.setup_token
+  );
+  if (!authorization.ok) {
+    return res.status(authorization.status).json({ error: authorization.error });
+  }
+
   const adminBody = req.body?.admin || req.body || {};
   const nombre = clean(adminBody.nombre, 200);
   const email = clean(adminBody.email, 200).toLowerCase();
@@ -109,7 +130,7 @@ router.post('/setup', async (req, res) => {
     // Serializa dos intentos simultáneos de configuración inicial.
     await client.query('LOCK TABLE usuarios IN EXCLUSIVE MODE');
 
-    if ((await userCount(client)) > 0) {
+    if ((await userStats(client)).superadmins > 0) {
       throw httpError(409, 'La configuración inicial ya fue completada. Inicia sesión con tu cuenta.');
     }
 
@@ -149,7 +170,7 @@ router.post('/setup', async (req, res) => {
 });
 
 // Login contra la tabla `usuarios`.
-router.post('/login', async (req, res) => {
+router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email) {
     return res.status(400).json({ error: 'El correo es requerido.' });

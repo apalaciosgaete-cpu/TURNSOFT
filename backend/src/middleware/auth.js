@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const { getJwtSecret, JWT_ALGORITHM } = require('../config/jwt');
 
 const ESTADO_CACHE_TTL = 30000;
 const estadoCache = new Map();
@@ -90,7 +91,7 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: 'Token de acceso requerido' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'secret_dev', async (err, user) => {
+  jwt.verify(token, getJwtSecret(), { algorithms: [JWT_ALGORITHM] }, async (err, user) => {
     if (err) {
       return res.status(403).json({ error: 'Token inválido o expirado' });
     }
