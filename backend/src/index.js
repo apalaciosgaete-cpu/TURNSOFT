@@ -2,7 +2,14 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const path = require('path');
+const { getJwtSecret } = require('./config/jwt');
+const rateLimits = require('./middleware/rateLimit');
+
+// Falla al arrancar si el secreto JWT falta o es inseguro, en vez de firmar
+// tokens con un valor conocido.
+getJwtSecret();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +20,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173,http:/
   .filter(Boolean);
 
 // Middleware
+app.use(helmet());
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
@@ -23,7 +31,7 @@ app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/guardias', require('./routes/guardias'));
 app.use('/api/turno-plantillas', require('./routes/turnoPlantillas'));
 app.use('/api/puestos', require('./routes/puestos'));
-app.use('/api/motor', require('./routes/motor'));
+app.use('/api/motor', rateLimits.motor, require('./routes/motor'));
 app.use('/api/horarios', require('./routes/horarios'));
 app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/reportes', require('./routes/reportes'));
