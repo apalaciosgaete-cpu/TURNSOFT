@@ -8,6 +8,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://turnsoft-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

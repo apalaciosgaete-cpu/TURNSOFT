@@ -3,10 +3,9 @@ const router = express.Router();
 const pool = require('../config/db');
 const { authenticateToken, clearEmpresaStatusCache } = require('../middleware/auth');
 const { requireSuperadmin } = require('../middleware/tenant');
-const { hashPassword } = require('../utils/password');
 
 const SECTORES = new Set(['seguridad', 'salud', 'mineria', 'retail', 'logistica']);
-const ESTADOS_EMPRESA = new Set(['activa', 'suspendida']);
+const ESTADOS_EMPRESA = new Set(['prueba', 'activa', 'suspendida', 'vencida']);
 const ESTADOS_PAGO = new Set(['pendiente', 'pagado', 'vencido', 'anulado']);
 const METODOS_PAGO = new Set(['transferencia', 'tarjeta', 'efectivo', 'otro']);
 const CATEGORIAS_SOPORTE = new Set(['consulta', 'pago', 'tecnico', 'otro']);
@@ -44,6 +43,21 @@ function parseLimit(value, field) {
   return number;
 }
 
+/**
+ * Cierra las pruebas que ya cumplieron sus 15 días. Se ejecuta antes de leer
+ * los resúmenes para que el supervisor vea el estado real sin esperar a que
+ * la empresa intente iniciar sesión.
+ */
+async function expireTrials() {
+  const result = await pool.query(`
+    UPDATE empresas
+    SET estado = 'vencida', actualizado_en = NOW()
+    WHERE estado = 'prueba' AND prueba_fin IS NOT NULL AND prueba_fin < NOW()
+    RETURNING id
+  `);
+  if (result.rowCount) clearEmpresaStatusCache();
+}
+
 function handleError(res, error, context) {
   if (error.status) return res.status(error.status).json({ error: error.message });
   if (error.code === '22P02') return res.status(400).json({ error: 'Identificador inválido.' });
@@ -70,18 +84,33 @@ function handleError(res, error, context) {
 router.use(authenticateToken, requireSuperadmin);
 
 /**
- * Resumen global de la aplicación.
+ * Resumen global de ocupación de la plataforma. El supervisor no da de alta
+ * empresas: aquí solo observa lo que ya está operando y lo que requiere acción.
  */
 router.get('/resumen', async (req, res) => {
   try {
-    const [stats, atencion, pagos, tickets] = await Promise.all([
+    await expireTrials();
+    const [stats, atencion, pagos, tickets, recientes] = await Promise.all([
       pool.query(`
         SELECT
           (SELECT count(*)::int FROM empresas) AS empresas,
           (SELECT count(*)::int FROM empresas WHERE estado = 'activa') AS activas,
+          (SELECT count(*)::int FROM empresas
+            WHERE estado = 'prueba' AND (prueba_fin IS NULL OR prueba_fin >= NOW())) AS en_prueba,
+          (SELECT count(*)::int FROM empresas
+            WHERE (estado = 'prueba' AND prueba_fin IS NOT NULL AND prueba_fin < NOW())
+               OR estado = 'vencida') AS pruebas_vencidas,
+          (SELECT count(*)::int FROM empresas
+            WHERE estado = 'prueba' AND prueba_fin >= NOW()
+              AND prueba_fin <= NOW() + INTERVAL '5 days') AS pruebas_por_vencer,
           (SELECT count(*)::int FROM empresas WHERE estado = 'suspendida') AS suspendidas,
+          (SELECT count(*)::int FROM empresas
+            WHERE creado_en >= date_trunc('month', NOW())) AS nuevas_mes,
           (SELECT count(*)::int FROM clientes) AS clientes,
           (SELECT count(*)::int FROM guardias) AS guardias,
+          (SELECT count(*)::int FROM usuarios) AS usuarios,
+          (SELECT count(*)::int FROM usuarios WHERE rol IN ('operador', 'admin')) AS operadores,
+          (SELECT count(*)::int FROM planes WHERE activo = true) AS planes_activos,
           (SELECT count(*)::int FROM pagos WHERE estado = 'pendiente') AS pagos_pendientes,
           (SELECT count(*)::int FROM pagos WHERE estado = 'vencido') AS pagos_vencidos,
           (SELECT coalesce(sum(monto), 0)::int FROM pagos WHERE estado = 'vencido') AS monto_vencido,
@@ -90,11 +119,15 @@ router.get('/resumen', async (req, res) => {
           (SELECT coalesce(sum(p.precio_mensual), 0)::int
             FROM empresas e JOIN planes p ON p.id = e.plan_id
             WHERE e.estado = 'activa') AS mrr,
+          (SELECT coalesce(sum(p.max_guardias), 0)::int
+            FROM empresas e JOIN planes p ON p.id = e.plan_id
+            WHERE e.estado IN ('activa', 'prueba') AND p.max_guardias IS NOT NULL) AS capacidad_guardias,
           (SELECT count(*)::int FROM soporte_tickets
             WHERE estado IN ('abierto', 'en_revision')) AS tickets_abiertos
       `),
       pool.query(`
-        SELECT e.id, e.razon_social, e.estado, e.motivo_bloqueo,
+        SELECT e.id, e.razon_social, e.estado, e.motivo_bloqueo, e.prueba_fin,
+               GREATEST(0, ceil(extract(epoch FROM (e.prueba_fin - NOW())) / 86400))::int AS dias_prueba,
                p.nombre AS plan_nombre,
                lp.periodo AS ultimo_periodo,
                lp.estado AS ultimo_pago_estado,
@@ -108,8 +141,18 @@ router.get('/resumen', async (req, res) => {
           ORDER BY periodo DESC, creado_en DESC
           LIMIT 1
         ) lp ON true
-        WHERE e.estado = 'suspendida' OR lp.estado = 'vencido'
-        ORDER BY CASE WHEN e.estado = 'suspendida' THEN 0 ELSE 1 END, e.razon_social
+        WHERE e.estado IN ('suspendida', 'vencida')
+           OR (e.estado = 'prueba' AND e.prueba_fin IS NOT NULL
+               AND e.prueba_fin <= NOW() + INTERVAL '5 days')
+           OR lp.estado = 'vencido'
+        ORDER BY CASE
+                   WHEN e.estado = 'vencida' THEN 0
+                   WHEN e.estado = 'suspendida' THEN 1
+                   WHEN e.estado = 'prueba' THEN 2
+                   ELSE 3
+                 END,
+                 e.prueba_fin NULLS LAST,
+                 e.razon_social
         LIMIT 6
       `),
       pool.query(`
@@ -134,6 +177,18 @@ router.get('/resumen', async (req, res) => {
                  t.creado_en DESC
         LIMIT 6
       `),
+      pool.query(`
+        SELECT e.id, e.razon_social, e.rut_empresa, e.sector, e.estado, e.origen,
+               e.prueba_fin, e.creado_en,
+               GREATEST(0, ceil(extract(epoch FROM (e.prueba_fin - NOW())) / 86400))::int AS dias_prueba,
+               p.nombre AS plan_nombre,
+               (SELECT count(*)::int FROM clientes c WHERE c.empresa_id = e.id) AS clientes,
+               (SELECT count(*)::int FROM guardias g WHERE g.empresa_id = e.id) AS guardias
+        FROM empresas e
+        LEFT JOIN planes p ON p.id = e.plan_id
+        ORDER BY e.creado_en DESC
+        LIMIT 6
+      `),
     ]);
 
     res.json({
@@ -141,6 +196,7 @@ router.get('/resumen', async (req, res) => {
       empresas_atencion: atencion.rows,
       pagos_por_verificar: pagos.rows,
       tickets_recientes: tickets.rows,
+      empresas_recientes: recientes.rows,
     });
   } catch (error) {
     handleError(res, error, 'resumen');
@@ -152,9 +208,17 @@ router.get('/resumen', async (req, res) => {
  */
 router.get('/empresas', async (req, res) => {
   try {
+    await expireTrials();
     const result = await pool.query(`
       SELECT e.id, e.razon_social, e.rut_empresa, e.sector, e.estado, e.dia_cobro,
-             e.bloqueada_en, e.motivo_bloqueo, e.notas, e.creado_en,
+             e.bloqueada_en, e.motivo_bloqueo, e.notas, e.creado_en, e.origen,
+             e.email_contacto, e.telefono, e.direccion, e.ciudad,
+             e.prueba_inicio, e.prueba_fin, e.activada_en,
+             CASE
+               WHEN e.estado = 'prueba' AND e.prueba_fin >= NOW()
+                 THEN GREATEST(0, ceil(extract(epoch FROM (e.prueba_fin - NOW())) / 86400))::int
+               ELSE 0
+             END AS dias_prueba,
              p.id AS plan_id, p.nombre AS plan_nombre, p.precio_mensual,
              p.max_clientes, p.max_usuarios, p.max_guardias,
              (SELECT count(*)::int FROM clientes c WHERE c.empresa_id = e.id) AS clientes,
@@ -196,92 +260,8 @@ router.get('/empresas', async (req, res) => {
 });
 
 /**
- * Alta de empresa + su primer operador.
- */
-router.post('/empresas', async (req, res) => {
-  const empresaBody = req.body?.empresa || req.body || {};
-  const adminBody = req.body?.admin || {};
-
-  const razonSocial = clean(empresaBody.razon_social, 200);
-  const rutEmpresa = clean(empresaBody.rut_empresa, 12);
-  const sector = clean(empresaBody.sector, 20).toLowerCase() || 'seguridad';
-  const planId = clean(empresaBody.plan_id, 36) || null;
-  const diaCobroRaw = empresaBody.dia_cobro;
-  const diaCobro = diaCobroRaw === undefined || diaCobroRaw === '' ? 1 : Number(diaCobroRaw);
-
-  const adminNombre = clean(adminBody.nombre, 200);
-  const adminEmail = clean(adminBody.email, 200).toLowerCase();
-  const adminPassword = String(adminBody.password || '');
-
-  if (!razonSocial) return res.status(400).json({ error: 'Ingresa la razón social de la empresa.' });
-  if (!rutEmpresa) return res.status(400).json({ error: 'Ingresa el RUT de la empresa.' });
-  if (!SECTORES.has(sector)) return res.status(400).json({ error: 'Selecciona un sector válido.' });
-  if (!Number.isInteger(diaCobro) || diaCobro < 1 || diaCobro > 28) {
-    return res.status(400).json({ error: 'El día de cobro debe estar entre 1 y 28.' });
-  }
-  if (!adminNombre) return res.status(400).json({ error: 'Ingresa el nombre del administrador.' });
-  if (!EMAIL_RE.test(adminEmail)) return res.status(400).json({ error: 'Ingresa un correo válido para el administrador.' });
-  if (adminPassword.length < 8) {
-    return res.status(400).json({ error: 'La clave del administrador debe tener al menos 8 caracteres.' });
-  }
-  if (adminPassword.length > 128) {
-    return res.status(400).json({ error: 'La clave del administrador no puede superar los 128 caracteres.' });
-  }
-
-  let client;
-  try {
-    client = await pool.connect();
-    await client.query('BEGIN');
-
-    if (planId) {
-      const plan = await client.query('SELECT id FROM planes WHERE id = $1', [planId]);
-      if (!plan.rows.length) throw httpError(400, 'El plan seleccionado no existe.');
-    }
-
-    const empresaResult = await client.query(
-      `INSERT INTO empresas
-         (razon_social, rut_empresa, sector, plan_id, estado, dia_cobro)
-       VALUES ($1, $2, $3, $4, 'activa', $5)
-       RETURNING id, razon_social, rut_empresa, sector, estado, plan_id, dia_cobro, creado_en`,
-      [razonSocial, rutEmpresa, sector, planId, diaCobro]
-    );
-    const empresa = empresaResult.rows[0];
-
-    await client.query(
-      `INSERT INTO configuracion_legal
-         (empresa_id, jornada_maxima_semanal, descanso_minimo_entre_turnos,
-          horas_extras_max_diarias, recargo_dominical_festivo)
-       VALUES ($1, 42, 12, 2, 30)`,
-      [empresa.id]
-    );
-
-    const adminResult = await client.query(
-      `INSERT INTO usuarios (empresa_id, cliente_id, nombre, email, password_hash, rol, activo)
-       VALUES ($1, NULL, $2, $3, $4, 'operador', true)
-       RETURNING id, nombre, email, rol, creado_en`,
-      [empresa.id, adminNombre, adminEmail, hashPassword(adminPassword)]
-    );
-
-    await client.query('COMMIT');
-
-    return res.status(201).json({
-      empresa,
-      admin: {
-        id: adminResult.rows[0].id,
-        nombre: adminResult.rows[0].nombre,
-        email: adminResult.rows[0].email,
-      },
-    });
-  } catch (error) {
-    if (client) await client.query('ROLLBACK').catch(() => {});
-    handleError(res, error, 'empresas-create');
-  } finally {
-    client?.release();
-  }
-});
-
-/**
  * Cambiar plan, día de cobro o estado (bloquear / reactivar) de una empresa.
+ * El alta de empresas es pública: el supervisor no crea cuentas desde aquí.
  */
 router.patch('/empresas/:id', async (req, res) => {
   const { id } = req.params;
@@ -319,7 +299,7 @@ router.patch('/empresas/:id', async (req, res) => {
     if (req.body?.estado !== undefined) {
       const estado = clean(req.body.estado, 20);
       if (!ESTADOS_EMPRESA.has(estado)) {
-        return res.status(400).json({ error: 'El estado debe ser activa o suspendida.' });
+        return res.status(400).json({ error: 'El estado debe ser prueba, activa, suspendida o vencida.' });
       }
       values.push(estado);
       sets.push(`estado = $${values.length}`);
@@ -334,6 +314,7 @@ router.patch('/empresas/:id', async (req, res) => {
         sets.push('motivo_bloqueo = NULL');
         sets.push('bloqueada_por = NULL');
         sets.push('bloqueada_en = NULL');
+        if (estado === 'activa') sets.push('activada_en = NOW()');
       }
     }
 
@@ -456,6 +437,7 @@ router.patch('/planes/:id', async (req, res) => {
  */
 router.get('/pagos', async (req, res) => {
   try {
+    await expireTrials();
     const estado = clean(req.query.estado, 20) || null;
     const empresaId = clean(req.query.empresa_id, 36) || null;
     const result = await pool.query(
@@ -595,11 +577,11 @@ router.patch('/pagos/:id', async (req, res) => {
     );
 
     let empresa = null;
-    if (req.body?.estado === 'pagado' && req.body?.reactivar === true) {
+    if (req.body?.estado === 'pagado' && req.body?.reactivar !== false) {
       const updated = await pool.query(
         `UPDATE empresas
          SET estado = 'activa', motivo_bloqueo = NULL, bloqueada_por = NULL,
-             bloqueada_en = NULL, actualizado_en = NOW()
+             bloqueada_en = NULL, activada_en = NOW(), actualizado_en = NOW()
          WHERE id = $1
          RETURNING id, razon_social, estado`,
         [pago.empresa_id]

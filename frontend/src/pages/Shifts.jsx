@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock3, Moon, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Clock3, Download, Moon, Pencil, Plus, Trash2 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import {
   formatHours,
@@ -9,6 +9,7 @@ import {
   WEEKDAYS_SHORT,
 } from '@shared/dates.js';
 import { getAllowedDailyHours } from '@shared/model.js';
+import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import {
   Badge,
@@ -38,10 +39,12 @@ function emptyShift() {
 }
 
 export default function Shifts() {
-  const { activeScenario: scenario, addShift, updateShift, removeShift } = useTurnsoft();
+  const { activeScenario: scenario, addShift, updateShift, removeShift, notify } = useTurnsoft();
+  const { token } = useAuth();
   const [editor, setEditor] = useState(null);
   const [form, setForm] = useState(emptyShift);
   const [error, setError] = useState('');
+  const [importing, setImporting] = useState(false);
 
   if (!scenario) return null;
   const meta = SECTOR_META[scenario.sector] || SECTOR_META.seguridad;
@@ -107,6 +110,51 @@ export default function Shifts() {
     setEditor(null);
   };
 
+  const importarBase = async () => {
+    setImporting(true);
+    try {
+      const base = await apiRequest('/turno-plantillas', { token });
+      const existentes = new Set(
+        scenario.shifts.map((shift) => String(shift.name || '').trim().toLowerCase())
+      );
+      const nuevas = (Array.isArray(base) ? base : []).filter(
+        (plantilla) =>
+          !existentes.has(String(plantilla.nombre || '').trim().toLowerCase())
+      );
+
+      if (!nuevas.length) {
+        notify('Los horarios base de Mi empresa ya están importados en este escenario.', 'info');
+        return;
+      }
+
+      nuevas.forEach((plantilla) => {
+        addShift(scenario.id, {
+          name: plantilla.nombre,
+          code: plantilla.codigo || String(plantilla.nombre || 'T').slice(0, 3).toUpperCase(),
+          start: String(plantilla.hora_inicio || '09:00').slice(0, 5),
+          end: String(plantilla.hora_fin || '18:00').slice(0, 5),
+          breakMinutes: Number(plantilla.minutos_colacion) || 0,
+          night: Boolean(plantilla.es_nocturno),
+          color: plantilla.color || COLORS[0],
+          coverage: Array.isArray(plantilla.cobertura_semanal)
+            ? plantilla.cobertura_semanal.slice(0, 7).map((value) => Number(value) || 0)
+            : [...DEFAULT_COVERAGE],
+          requiredCertifications: Array.isArray(plantilla.certificaciones_requeridas)
+            ? plantilla.certificaciones_requeridas
+            : [],
+        });
+      });
+
+      notify(
+        `${nuevas.length} horario${nuevas.length === 1 ? '' : 's'} importado${nuevas.length === 1 ? '' : 's'} desde Mi empresa.`
+      );
+    } catch (requestError) {
+      notify(requestError.message, 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="page shifts-page">
       <div className="stat-grid stat-grid-compact">
@@ -119,7 +167,20 @@ export default function Shifts() {
       <Card
         title="Plantillas de turno"
         subtitle="La cobertura indica cuántas personas se necesitan cada día. Usa 0 para cerrar la operación ese día."
-        actions={<Button size="sm" icon={Plus} onClick={openNew}>Nuevo turno</Button>}
+        actions={
+          <div className="card-actions-row">
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Download}
+              onClick={importarBase}
+              disabled={importing}
+            >
+              {importing ? 'Importando…' : 'Importar base'}
+            </Button>
+            <Button size="sm" icon={Plus} onClick={openNew}>Nuevo turno</Button>
+          </div>
+        }
       >
         {scenario.shifts.length === 0 ? (
           <EmptyState

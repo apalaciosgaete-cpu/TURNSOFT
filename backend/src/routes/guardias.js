@@ -140,6 +140,21 @@ router.post('/:id/certificacion-os10', authenticateToken, async (req, res) => {
   }
 });
 
+// Eliminar un trabajador de la base de la empresa.
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const guard = await findGuard(req.params.id, req.user);
+    if (!guard) {
+      return res.status(404).json({ error: 'Trabajador no encontrado.' });
+    }
+    await pool.query('DELETE FROM guardias WHERE id = $1', [guard.id]);
+    res.json({ deleted: true });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    res.status(500).json({ error: 'No se pudo eliminar el trabajador.' });
+  }
+});
+
 // Actualizar guardia.
 router.put('/:id', authenticateToken, async (req, res) => {
   try {

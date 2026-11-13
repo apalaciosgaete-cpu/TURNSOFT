@@ -119,8 +119,12 @@ export default function MasterPayments() {
 
       <Card
         title="Mensualidades"
-        subtitle="Verifica cada pago para actualizar el estado de la empresa."
-        actions={<Badge tone="info">{filtered.length} registros</Badge>}
+        subtitle="Verifica cada pago. Al confirmarlo, la empresa pasa a activa y recupera el acceso."
+        actions={
+          <Badge tone="info">
+            {filtered.length} registro{filtered.length === 1 ? '' : 's'}
+          </Badge>
+        }
         noPadding
       >
         {loading && !pagos.length ? (
@@ -214,8 +218,8 @@ export default function MasterPayments() {
           <EmptyState
             icon={CreditCard}
             title="Aún no hay pagos registrados"
-            description="Registra la primera mensualidad y verifícala cuando el pago se confirme."
-            action={<Button icon={Plus} onClick={() => setCreateOpen(true)}>Registrar primer pago</Button>}
+            description="Los pagos aparecen al completar el registro público de una empresa. También puedes registrar una mensualidad manualmente."
+            action={<Button icon={Plus} onClick={() => setCreateOpen(true)}>Registrar pago</Button>}
           />
         )}
       </Card>
@@ -231,15 +235,15 @@ export default function MasterPayments() {
         <div className="master-note">
           <CheckCircle2 size={18} />
           <div>
-            <strong>Verificación</strong>
-            <span>Al marcar un pago como pagado, queda registrado quién lo verificó y cuándo.</span>
+            <strong>Verificación y activación</strong>
+            <span>Al marcar un pago como pagado, queda registrado quién lo verificó y la empresa pasa a activa automáticamente.</span>
           </div>
         </div>
         <div className="master-note">
           <ShieldCheck size={18} />
           <div>
-            <strong>Reactivación</strong>
-            <span>Si la empresa estaba bloqueada, puedes devolver el acceso en el mismo paso.</span>
+            <strong>Prueba vencida o suspendida</strong>
+            <span>La verificación del pago devuelve el acceso a todos los usuarios en el mismo paso, sin esperar otro cambio.</span>
           </div>
         </div>
       </div>

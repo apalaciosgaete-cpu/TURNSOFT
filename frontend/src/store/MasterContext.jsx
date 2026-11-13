@@ -94,11 +94,6 @@ export function MasterProvider({ children }) {
   const actions = useMemo(
     () => ({
       refresh,
-      createEmpresa: (payload) =>
-        run('/master/empresas', {
-          body: payload,
-          successMessage: 'Empresa creada. Su administrador ya puede iniciar sesión.',
-        }),
       updateEmpresa: (id, payload) =>
         run(`/master/empresas/${id}`, {
           method: 'PATCH',
@@ -107,8 +102,10 @@ export function MasterProvider({ children }) {
             payload?.estado === 'suspendida'
               ? 'Empresa bloqueada. Sus usuarios ya no podrán ingresar.'
               : payload?.estado === 'activa'
-                ? 'Empresa reactivada correctamente.'
-                : 'Empresa actualizada.',
+                ? 'Empresa activada. Sus usuarios ya tienen acceso.'
+                : payload?.estado === 'vencida'
+                  ? 'Empresa marcada como prueba vencida.'
+                  : 'Empresa actualizada.',
         }),
       createPlan: (payload) =>
         run('/master/planes', { body: payload, successMessage: 'Plan creado.' }),

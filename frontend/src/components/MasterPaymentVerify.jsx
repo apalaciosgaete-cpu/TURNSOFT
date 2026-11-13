@@ -31,7 +31,16 @@ export function MasterPaymentVerify({ open, pago, onClose }) {
   const [saving, setSaving] = useState(false);
 
   const empresa = empresas.find((item) => item.id === pago?.empresa_id) || null;
-  const suspendida = empresa?.estado === 'suspendida';
+  const requiereActivacion = Boolean(empresa && empresa.estado !== 'activa');
+  const estadoEmpresa = empresa?.estado || '';
+  const motivoEmpresa =
+    estadoEmpresa === 'vencida'
+      ? 'La prueba de 15 días terminó y la empresa está bloqueada.'
+      : estadoEmpresa === 'prueba'
+        ? `La empresa sigue en prueba hasta el ${dateLabel(empresa?.prueba_fin)}.`
+        : estadoEmpresa === 'suspendida'
+          ? `La empresa está bloqueada por ${empresa?.motivo_bloqueo || 'falta de pago'}.`
+          : '';
 
   useEffect(() => {
     if (!open || !pago) return;
@@ -149,17 +158,17 @@ export function MasterPaymentVerify({ open, pago, onClose }) {
           />
         </Field>
 
-        {suspendida ? (
+        {requiereActivacion ? (
           <div className="field-full master-reactivate-box">
             <Toggle
               checked={form.reactivar}
               onChange={(checked) => setForm((previous) => ({ ...previous, reactivar: checked }))}
-              label="Reactivar la empresa al verificar el pago"
-              description={`${empresa.razon_social} está bloqueada por ${empresa.motivo_bloqueo || 'falta de pago'}.`}
+              label="Activar la empresa al verificar el pago"
+              description={`${empresa.razon_social}: ${motivoEmpresa}`}
               disabled={form.estado !== 'pagado'}
             />
             <span className="master-reactivate-hint">
-              <RefreshCcw size={14} /> Al guardar, el acceso de todos sus usuarios se restaura de inmediato.
+              <RefreshCcw size={14} /> Al guardar, la empresa pasa a activa y el acceso de todos sus usuarios se restaura de inmediato.
             </span>
           </div>
         ) : null}

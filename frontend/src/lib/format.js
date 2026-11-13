@@ -65,6 +65,25 @@ export function relativeTime(value) {
   return dateLabel(value);
 }
 
+/** "1 empresa" / "3 empresas" sin duplicar la lógica en cada vista. */
+export function plural(count, singular, pluralForm) {
+  return `${count} ${Number(count) === 1 ? singular : pluralForm}`;
+}
+
+/**
+ * Días calendario restantes de una prueba. El día de inicio muestra 15 y
+ * el último día muestra 1, sin desfases por horas o zonas horarias.
+ */
+export function trialDaysLeft(value) {
+  if (!value) return null;
+  const end = new Date(value);
+  if (Number.isNaN(end.getTime())) return null;
+  const today = new Date();
+  const endDay = Date.UTC(end.getFullYear(), end.getMonth(), end.getDate());
+  const todayDay = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+  return Math.max(0, Math.round((endDay - todayDay) / 86400000));
+}
+
 /** Porcentaje de uso de un límite del plan (null = ilimitado). */
 export function usage(value, limit) {
   if (limit === null || limit === undefined) return null;

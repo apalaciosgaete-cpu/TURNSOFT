@@ -113,6 +113,9 @@ function buildSession(user, dbClients, token, previous = null) {
     name: user.nombre || user.email,
     role: isSuperadmin ? 'superadmin' : isOperator ? 'operador' : 'cliente',
     empresa: user.empresa_nombre || (isSuperadmin ? 'TURNSOFT' : 'Mi empresa'),
+    empresaEstado: user.empresa_estado || null,
+    pruebaFin: user.prueba_fin || null,
+    planName: user.plan_nombre || null,
     clientId: ownClient?.id || null,
     clientName: ownClient?.name || user.cliente_nombre || null,
     activeClientId: isOperator ? previousActive : ownClient?.id || null,
@@ -205,7 +208,7 @@ export function AuthProvider({ children }) {
         }
       } catch (error) {
         if (!cancelled && error.status === 401) setSession(null);
-        if (!cancelled && error.code === 'EMPRESA_SUSPENDIDA') {
+        if (!cancelled && (error.code === 'EMPRESA_SUSPENDIDA' || error.code === 'PRUEBA_VENCIDA')) {
           setSession(null);
           setAuthError(error.message);
         }
@@ -252,6 +255,23 @@ export function AuthProvider({ children }) {
           ? []
           : await apiRequest('/clientes', { token: data.token });
       setSession(buildSession(data.user, dbClients, data.token));
+      setBootstrap({ loading: false, needsSetup: false, userCount: 1, unavailable: false });
+      return true;
+    } catch (error) {
+      setAuthError(error.message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, []);
+
+  /** Registro público: crea empresa, administrador y prueba de 15 días. */
+  const register = useCallback(async (payload) => {
+    setBusy(true);
+    setAuthError('');
+    try {
+      const data = await apiRequest('/public/registro', { method: 'POST', body: payload });
+      setSession(buildSession(data.user, [], data.token));
       setBootstrap({ loading: false, needsSetup: false, userCount: 1, unavailable: false });
       return true;
     } catch (error) {
@@ -332,6 +352,7 @@ export function AuthProvider({ children }) {
       clearAuthError,
       login,
       setup,
+      register,
       createClient,
       logout,
       selectClient,
@@ -349,6 +370,7 @@ export function AuthProvider({ children }) {
       clearAuthError,
       login,
       setup,
+      register,
       createClient,
       logout,
       selectClient,

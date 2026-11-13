@@ -1,13 +1,41 @@
 import { useEffect, useState } from 'react';
-import { Ban, CheckCircle2, Save, ShieldAlert } from 'lucide-react';
+import { Ban, CheckCircle2, Save, ShieldAlert, Sparkles } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import { useMaster } from '../store/MasterContext.jsx';
-import { money, usage } from '../lib/format.js';
+import { dateLabel, money, trialDaysLeft, usage } from '../lib/format.js';
 import { Badge, Button, Field, Modal, Progress } from './ui.jsx';
+
+const ESTADOS = [
+  { id: 'prueba', label: 'En prueba (15 días)' },
+  { id: 'activa', label: 'Activa' },
+  { id: 'suspendida', label: 'Suspendida' },
+  { id: 'vencida', label: 'Prueba vencida' },
+];
+
+function estadoTone(estado) {
+  if (estado === 'activa') return 'ok';
+  if (estado === 'prueba') return 'info';
+  if (estado === 'vencida') return 'warn';
+  return 'danger';
+}
+
+function estadoLabel(estado) {
+  if (estado === 'activa') return 'Activa';
+  if (estado === 'prueba') return 'En prueba';
+  if (estado === 'vencida') return 'Prueba vencida';
+  if (estado === 'suspendida') return 'Suspendida';
+  return estado;
+}
 
 export function MasterCompanySettings({ open, empresa, onClose }) {
   const { planes, updateEmpresa } = useMaster();
-  const [form, setForm] = useState({ plan_id: '', dia_cobro: 1, notas: '', motivo_bloqueo: '' });
+  const [form, setForm] = useState({
+    plan_id: '',
+    dia_cobro: 1,
+    notas: '',
+    motivo_bloqueo: '',
+    estado: 'activa',
+  });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [blocking, setBlocking] = useState(false);
@@ -19,6 +47,7 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
       dia_cobro: empresa.dia_cobro || 1,
       notas: empresa.notas || '',
       motivo_bloqueo: empresa.motivo_bloqueo || 'Falta de pago',
+      estado: empresa.estado || 'activa',
     });
     setError('');
     setBlocking(false);
@@ -26,20 +55,30 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
 
   if (!empresa) return null;
 
-  const suspendida = empresa.estado === 'suspendida';
+  const suspendida = form.estado === 'suspendida';
+  const vencida = form.estado === 'vencida';
+  const enPrueba = form.estado === 'prueba';
   const selectedPlan = planes.find((plan) => plan.id === form.plan_id) || null;
   const sector = SECTOR_META[empresa.sector]?.label || empresa.sector;
+  const diasPrueba = enPrueba ? trialDaysLeft(empresa.prueba_fin) ?? 0 : null;
 
   const save = async (event) => {
     event?.preventDefault();
     setSaving(true);
     setError('');
     try {
-      await updateEmpresa(empresa.id, {
+      const payload = {
         plan_id: form.plan_id || null,
         dia_cobro: Number(form.dia_cobro) || 1,
         notas: form.notas.trim(),
-      });
+      };
+      if (form.estado !== empresa.estado) {
+        payload.estado = form.estado;
+        if (form.estado === 'suspendida') {
+          payload.motivo_bloqueo = form.motivo_bloqueo.trim() || 'Falta de pago';
+        }
+      }
+      await updateEmpresa(empresa.id, payload);
       onClose?.();
     } catch (requestError) {
       setError(requestError.message);
@@ -64,7 +103,7 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
     }
   };
 
-  const reactivate = async () => {
+  const reactivar = async () => {
     setSaving(true);
     setError('');
     try {
@@ -76,6 +115,22 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
       setSaving(false);
     }
   };
+
+  const bannerTitle = suspendida
+    ? 'Empresa suspendida'
+    : vencida
+      ? 'Prueba vencida'
+      : enPrueba
+        ? 'Empresa en período de prueba'
+        : 'Empresa activa';
+
+  const bannerCopy = suspendida
+    ? `${empresa.motivo_bloqueo || 'Falta de pago'} · sus usuarios no pueden iniciar sesión.`
+    : vencida
+      ? 'La prueba de 15 días terminó. Sus usuarios no pueden operar hasta que se verifique un pago.'
+      : enPrueba
+        ? `Quedan ${diasPrueba ?? 0} días de prueba. Termina el ${dateLabel(empresa.prueba_fin)}.`
+        : 'La empresa y sus usuarios pueden operar con normalidad.';
 
   return (
     <Modal
@@ -93,22 +148,39 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
       }
     >
       <form className="form-grid" onSubmit={save}>
-        <div className={`master-account-banner ${suspendida ? 'is-blocked' : ''} field-full`}>
+        <div className={`master-account-banner ${suspendida || vencida ? 'is-blocked' : ''} field-full`}>
           <span className="master-account-icon">
-            {suspendida ? <ShieldAlert size={19} /> : <CheckCircle2 size={19} />}
+            {suspendida || vencida ? <ShieldAlert size={19} /> : enPrueba ? <Sparkles size={19} /> : <CheckCircle2 size={19} />}
           </span>
           <div>
-            <strong>{suspendida ? 'Empresa bloqueada' : 'Empresa activa'}</strong>
-            <span>
-              {suspendida
-                ? `${empresa.motivo_bloqueo || 'Falta de pago'} · sus usuarios no pueden iniciar sesión.`
-                : 'La empresa y sus usuarios pueden operar con normalidad.'}
-            </span>
+            <strong>{bannerTitle}</strong>
+            <span>{bannerCopy}</span>
           </div>
-          <Badge tone={suspendida ? 'danger' : 'ok'} dot>
-            {suspendida ? 'Suspendida' : 'Activa'}
+          <Badge tone={estadoTone(form.estado)} dot>
+            {estadoLabel(form.estado)}
           </Badge>
         </div>
+
+        {enPrueba || vencida ? (
+          <div className="master-trial-summary field-full">
+            <div>
+              <span>Inicio de prueba</span>
+              <strong>{dateLabel(empresa.prueba_inicio)}</strong>
+            </div>
+            <div>
+              <span>Término de prueba</span>
+              <strong>{dateLabel(empresa.prueba_fin)}</strong>
+            </div>
+            <div>
+              <span>Origen</span>
+              <strong>{empresa.origen === 'registro' ? 'Registro público' : 'Supervisor'}</strong>
+            </div>
+            <div>
+              <span>Activada</span>
+              <strong>{empresa.activada_en ? dateLabel(empresa.activada_en) : '—'}</strong>
+            </div>
+          </div>
+        ) : null}
 
         <div className="master-usage-grid field-full">
           <div>
@@ -152,6 +224,18 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
           </select>
         </Field>
 
+        <Field label="Estado de la cuenta" hint="El estado se aplica al guardar los cambios.">
+          <select
+            className="input"
+            value={form.estado}
+            onChange={(event) => setForm((previous) => ({ ...previous, estado: event.target.value }))}
+          >
+            {ESTADOS.map((estado) => (
+              <option key={estado.id} value={estado.id}>{estado.label}</option>
+            ))}
+          </select>
+        </Field>
+
         <Field label="Día de cobro">
           <input
             className="input"
@@ -175,16 +259,18 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
 
         <div className="field-full master-danger-zone">
           <div className="master-danger-copy">
-            <strong>{suspendida ? 'Reactivar empresa' : 'Bloquear por no pago'}</strong>
+            <strong>
+              {suspendida || vencida ? 'Devolver el acceso' : 'Bloquear por no pago'}
+            </strong>
             <span>
-              {suspendida
-                ? 'Restaura el acceso de todos los usuarios de la empresa.'
+              {suspendida || vencida
+                ? 'Restaura el acceso de todos los usuarios de la empresa de inmediato.'
                 : 'El login y la API rechazarán el acceso de todos sus usuarios.'}
             </span>
           </div>
-          {suspendida ? (
-            <Button variant="secondary" icon={CheckCircle2} onClick={reactivate} disabled={saving}>
-              Reactivar empresa
+          {suspendida || vencida ? (
+            <Button variant="secondary" icon={CheckCircle2} onClick={reactivar} disabled={saving}>
+              Activar empresa
             </Button>
           ) : blocking ? (
             <div className="master-block-form">
@@ -211,4 +297,3 @@ export function MasterCompanySettings({ open, empresa, onClose }) {
     </Modal>
   );
 }
-

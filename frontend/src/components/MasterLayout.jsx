@@ -23,7 +23,7 @@ const PAGE_META = {
   },
   '/master/empresas': {
     title: 'Empresas',
-    subtitle: 'Altas, planes, bloqueo por no pago y uso de cada cuenta.',
+    subtitle: 'Empresas registradas, prueba de 15 días, plan y ocupación.',
   },
   '/master/pagos': {
     title: 'Pagos',
@@ -63,6 +63,7 @@ export function MasterLayout() {
   const pendingPayments = Number(resumen?.pagos_pendientes || 0);
   const overdue = Number(resumen?.pagos_vencidos || 0);
   const openTickets = Number(resumen?.tickets_abiertos || 0);
+  const trialsEnding = Number(resumen?.pruebas_por_vencer || 0);
 
   const handleLogout = () => {
     if (window.confirm('¿Cerrar sesión en la consola maestra?')) {
@@ -130,8 +131,9 @@ export function MasterLayout() {
               <strong>Rol global</strong>
             </div>
             <p>
-              Esta cuenta no pertenece a una empresa. Gestiona altas, pagos,
-              bloqueos y soporte de toda la plataforma.
+              Esta cuenta no pertenece a una empresa. Supervisa la ocupación,
+              los pagos, los planes y el soporte de toda la plataforma. Las
+              empresas se registran desde la página pública.
             </p>
           </div>
 
@@ -192,6 +194,11 @@ export function MasterLayout() {
                     {openTickets} ticket{openTickets === 1 ? '' : 's'} abierto{openTickets === 1 ? '' : 's'}
                   </Badge>
                 ) : null}
+                {trialsEnding > 0 ? (
+                  <Badge tone="warn" dot>
+                    {trialsEnding} prueba{trialsEnding === 1 ? '' : 's'} por vencer
+                  </Badge>
+                ) : null}
               </div>
               <h1 className="topbar-title">{meta.title}</h1>
             </div>
@@ -216,9 +223,9 @@ export function MasterLayout() {
 
         <footer className="app-footer">
           <span>
-            TURNSOFT · {new Date().getFullYear()} · Consola del supervisor maestro
+            TURNSOFT · {new Date().getFullYear()} · Supervisión de ocupación, pagos y soporte
           </span>
-          <span>Pagos y soporte con verificación manual</span>
+          <span>Alta pública de empresas · prueba de 15 días</span>
         </footer>
       </div>
 

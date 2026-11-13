@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   BookOpen,
   Building2,
@@ -26,6 +27,7 @@ import { SECTOR_META } from '@shared/legal.js';
 import { formatRange } from '@shared/dates.js';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { trialDaysLeft } from '../lib/format.js';
 import { Badge, Button, SectorIcon } from './ui.jsx';
 import { BrandMark } from './Brand.jsx';
 import { ScenarioModal } from './ScenarioModal.jsx';
@@ -39,6 +41,7 @@ const PAGE_META = {
   '/reportes': { title: 'Reportes', subtitle: 'Métricas de cumplimiento, hallazgos y exportación.' },
   '/legal': { title: 'Base legal', subtitle: 'Fuentes, hitos de jornada y criterios aplicados en Chile.' },
   '/clientes': { title: 'Clientes', subtitle: 'Cuentas bajo la operación, aislamiento y acceso a cada servicio.' },
+  '/empresa': { title: 'Mi empresa', subtitle: 'Datos de la empresa, base de trabajadores y horarios de entrada y salida.' },
   '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con TURNSOFT.' },
 };
 
@@ -82,12 +85,17 @@ export function Layout() {
   const errors = activeValidation?.metrics?.errors || 0;
   const warnings = activeValidation?.metrics?.warnings || 0;
   const NoticeIcon = notice ? NOTICE_ICONS[notice.tone] || Info : Info;
+  const trialDays = trialDaysLeft(session?.pruebaFin);
+  const showTrial = isOperator && session?.empresaEstado === 'prueba';
 
   const navGroups = [
     {
       label: 'Operación',
       items: [
         { to: '/', label: 'Panel', icon: LayoutDashboard, end: true },
+        ...(isOperator
+          ? [{ to: '/empresa', label: 'Mi empresa', icon: Building2 }]
+          : []),
         {
           to: '/clientes',
           label: isOperator ? 'Clientes' : 'Mi cuenta',
@@ -337,6 +345,21 @@ export function Layout() {
         </header>
 
         <main className="content">
+          {showTrial ? (
+            <div className={`trial-banner ${trialDays !== null && trialDays <= 5 ? 'is-urgent' : ''}`}>
+              <span className="trial-banner-icon"><Sparkles size={18} /></span>
+              <div className="trial-banner-copy">
+                <strong>Prueba de 15 días · quedan {trialDays ?? 0} días</strong>
+                <span>
+                  {session?.planName ? `Plan ${session.planName}. ` : ''}
+                  Al verificar el pago, tu empresa queda activa automáticamente.
+                </span>
+              </div>
+              <Link className="trial-banner-link" to="/empresa">
+                Revisar mi empresa <ArrowRight size={15} />
+              </Link>
+            </div>
+          ) : null}
           <Outlet />
         </main>
 

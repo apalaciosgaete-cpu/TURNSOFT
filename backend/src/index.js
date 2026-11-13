@@ -29,6 +29,7 @@ app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/reportes', require('./routes/reportes'));
 app.use('/api/soporte', require('./routes/soporte'));
 app.use('/api/master', require('./routes/master'));
+app.use('/api/public', require('./routes/public'));
 app.use('/api/auth', require('./routes/auth'));
 
 // Ruta de salud

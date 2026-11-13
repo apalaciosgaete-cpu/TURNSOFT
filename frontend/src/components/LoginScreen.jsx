@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   CheckCircle2,
@@ -156,7 +157,7 @@ export function LoginScreen() {
             <h2>Crea la cuenta de supervisor maestro</h2>
             <p className="login-card-sub">
               Este paso se realiza una sola vez. La cuenta maestra es global:
-              administra empresas, pagos, planes y soporte de toda la plataforma.
+              supervisa las empresas que se registran, los pagos, los planes y el soporte.
             </p>
 
             {authError || formError ? (
@@ -233,8 +234,8 @@ export function LoginScreen() {
             </button>
 
             <p className="login-coldstart">
-              Al entrar podrás crear la primera empresa operadora, asignarle un
-              plan y registrar sus pagos.
+              Al entrar podrás supervisar la ocupación de la plataforma, verificar
+              pagos y responder solicitudes de soporte.
             </p>
           </form>
         ) : (
@@ -288,6 +289,13 @@ export function LoginScreen() {
               <span>{busy ? 'Conectando con el servidor…' : 'Entrar a TURNSOFT'}</span>
               <ArrowRight size={17} />
             </button>
+
+            <div className="login-register-cta">
+              <span>¿Tu empresa aún no está en TURNSOFT?</span>
+              <Link to="/registro">
+                Regístrate y prueba 15 días <ArrowRight size={14} />
+              </Link>
+            </div>
 
             <p className="login-coldstart">
               El servidor gratuito puede tardar hasta un minuto en despertar tras

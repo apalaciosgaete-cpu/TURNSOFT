@@ -4,7 +4,6 @@ const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const {
   requireOperator,
-  requireSuperadmin,
   assertEmpresaAccess,
   scopedEmpresaId,
 } = require('../middleware/tenant');
@@ -33,14 +32,18 @@ router.get('/', authenticateToken, async (req, res) => {
   try {
     const empresaId = scopedEmpresaId(req.user, req.query.empresa_id);
     const result = await pool.query(
-      `SELECT id, razon_social, rut_empresa, sector, regimen_jornada,
-              autorizacion_excepcional, referencia_autorizacion, notas,
-              jornada_maxima_semanal, descanso_minimo_entre_turnos,
-              horas_extras_max_diarias, recargo_dominical_festivo,
-              creado_en, actualizado_en
-       FROM empresas
-       WHERE ($1::uuid IS NULL OR id = $1)
-       ORDER BY razon_social`,
+      `SELECT e.id, e.razon_social, e.rut_empresa, e.sector, e.regimen_jornada,
+              e.autorizacion_excepcional, e.referencia_autorizacion, e.notas,
+              e.jornada_maxima_semanal, e.descanso_minimo_entre_turnos,
+              e.horas_extras_max_diarias, e.recargo_dominical_festivo,
+              e.email_contacto, e.telefono, e.direccion, e.ciudad,
+              e.estado, e.plan_id, e.prueba_inicio, e.prueba_fin,
+              e.creado_en, e.actualizado_en,
+              p.nombre AS plan_nombre, p.precio_mensual
+       FROM empresas e
+       LEFT JOIN planes p ON p.id = e.plan_id
+       WHERE ($1::uuid IS NULL OR e.id = $1)
+       ORDER BY e.razon_social`,
       [empresaId || null]
     );
     res.json(result.rows);
@@ -50,77 +53,75 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Crear empresa. Solo el supervisor maestro puede dar de alta una empresa.
-router.post('/', authenticateToken, requireSuperadmin, async (req, res) => {
-  const client = await pool.connect();
+// Actualizar los datos de la empresa. Solo el administrador de la empresa puede
+// editar su propia ficha; el supervisor no crea empresas desde esta ruta.
+router.patch('/:id', authenticateToken, requireOperator, async (req, res) => {
   try {
-    const {
-      razon_social,
-      rut_empresa,
-      sector = 'seguridad',
-      regimen_jornada = 'ordinaria',
-      autorizacion_excepcional = false,
-      referencia_autorizacion = null,
-      notas = null,
-      jornada_maxima_semanal = 42,
-      descanso_minimo_entre_turnos = 12,
-      horas_extras_max_diarias = 2,
-      recargo_dominical_festivo = 30.0,
-    } = req.body;
+    assertEmpresaAccess(req.user, req.params.id);
 
-    if (!razon_social || !rut_empresa) {
-      return res.status(400).json({ error: 'razon_social y rut_empresa son requeridos' });
+    const SECTORES = new Set(['seguridad', 'salud', 'mineria', 'retail', 'logistica']);
+    const sets = [];
+    const values = [];
+
+    const fields = [
+      ['razon_social', 200],
+      ['rut_empresa', 12],
+      ['sector', 20],
+      ['email_contacto', 200],
+      ['telefono', 50],
+      ['direccion', 500],
+      ['ciudad', 100],
+      ['notas', 2000],
+    ];
+
+    for (const [field, max] of fields) {
+      if (req.body[field] === undefined) continue;
+      let value = String(req.body[field] ?? '').trim().slice(0, max);
+      if (field === 'rut_empresa') {
+        value = value.replace(/\./g, '').replace(/\s/g, '').toUpperCase();
+        if (!/^\d{6,8}-[0-9kK]$/.test(value)) {
+          return res.status(400).json({ error: 'Ingresa un RUT válido, por ejemplo 76.123.456-7.' });
+        }
+      }
+      if (field === 'razon_social' && !value) {
+        return res.status(400).json({ error: 'La razón social no puede quedar vacía.' });
+      }
+      if (field === 'sector' && !SECTORES.has(value.toLowerCase())) {
+        return res.status(400).json({ error: 'Selecciona un sector válido.' });
+      }
+      if (field === 'email_contacto' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return res.status(400).json({ error: 'Ingresa un correo de contacto válido.' });
+      }
+      values.push(value || null);
+      sets.push(`${field} = $${values.length}`);
     }
 
-    await client.query('BEGIN');
-    const result = await client.query(
-      `INSERT INTO empresas
-         (razon_social, rut_empresa, sector, regimen_jornada, autorizacion_excepcional,
-          referencia_autorizacion, notas, jornada_maxima_semanal,
-          descanso_minimo_entre_turnos, horas_extras_max_diarias, recargo_dominical_festivo)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-       RETURNING *`,
-      [
-        razon_social,
-        rut_empresa,
-        sector,
-        regimen_jornada,
-        Boolean(autorizacion_excepcional),
-        referencia_autorizacion,
-        notas,
-        jornada_maxima_semanal,
-        descanso_minimo_entre_turnos,
-        horas_extras_max_diarias,
-        recargo_dominical_festivo,
-      ]
+    if (!sets.length) {
+      return res.status(400).json({ error: 'No se enviaron cambios para la empresa.' });
+    }
+
+    values.push(req.params.id);
+    const result = await pool.query(
+      `UPDATE empresas
+       SET ${sets.join(', ')}, actualizado_en = NOW()
+       WHERE id = $${values.length}
+       RETURNING id, razon_social, rut_empresa, sector, email_contacto,
+                 telefono, direccion, ciudad, notas, estado, plan_id,
+                 prueba_fin, actualizado_en`,
+      values
     );
 
-    const empresaId = result.rows[0].id;
-    const legalFallbacks = {
-      jornada_maxima_semanal,
-      descanso_minimo_entre_turnos,
-      horas_extras_max_diarias,
-      recargo_dominical_festivo,
-    };
-    const legalValues = LEGAL_FIELDS.map(
-      (field) => req.body[field] ?? legalFallbacks[field] ?? null
-    );
-    const legalColumns = LEGAL_FIELDS.join(', ');
-    const placeholders = LEGAL_FIELDS.map((_, index) => `$${index + 2}`).join(', ');
-    await client.query(
-      `INSERT INTO configuracion_legal (empresa_id, ${legalColumns})
-       VALUES ($1, ${placeholders})`,
-      [empresaId, ...legalValues]
-    );
-
-    await client.query('COMMIT');
-    res.status(201).json(result.rows[0]);
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'Empresa no encontrada.' });
+    }
+    return res.json(result.rows[0]);
   } catch (error) {
-    await client.query('ROLLBACK').catch(() => {});
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
-  } finally {
-    client.release();
+    if (error.code === '23505') {
+      return res.status(409).json({ error: 'Ya existe otra empresa con ese RUT.' });
+    }
+    console.error('[empresas/patch]', error);
+    return res.status(500).json({ error: 'No se pudieron guardar los datos de la empresa.' });
   }
 });
 

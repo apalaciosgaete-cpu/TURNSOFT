@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
-import { BadgeCheck, Pencil, Plus, Search, Trash2, UserCheck, UserX, Users } from 'lucide-react';
+import { BadgeCheck, Download, Pencil, Plus, Search, Trash2, UserCheck, UserX, Users } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import { addDays, diffDays, formatDateShort } from '@shared/dates.js';
+import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import {
   Avatar,
@@ -38,11 +39,13 @@ function emptyEmployee(scenario) {
 }
 
 export default function Staff() {
-  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee } = useTurnsoft();
+  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee, notify } = useTurnsoft();
+  const { token } = useAuth();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState(null);
   const [form, setForm] = useState(() => emptyEmployee(scenario));
   const [error, setError] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const meta = SECTOR_META[scenario?.sector] || SECTOR_META.seguridad;
   const employees = scenario?.employees || [];
@@ -192,6 +195,62 @@ export default function Staff() {
     );
   };
 
+  const importarBase = async () => {
+    setImporting(true);
+    try {
+      const base = await apiRequest('/guardias', { token });
+      const key = (name, rut) =>
+        `${String(name || '').trim().toLowerCase()}|${String(rut || '').replace(/\./g, '').toUpperCase()}`;
+      const existentes = new Set(employees.map((employee) => key(employee.name, employee.rut)));
+      const nuevos = (Array.isArray(base) ? base : []).filter(
+        (guardia) =>
+          guardia.activo !== false && !existentes.has(key(guardia.nombre_completo, guardia.rut))
+      );
+
+      if (!nuevos.length) {
+        notify('La base de trabajadores no tiene personas nuevas para importar.', 'info');
+        return;
+      }
+
+      nuevos.forEach((guardia) => {
+        const certificaciones = [];
+        if (guardia.numero_certificado || guardia.fecha_vencimiento) {
+          certificaciones.push({
+            id: `os10-${guardia.id}`,
+            name: 'OS-10',
+            issuer: guardia.emitido_por || 'OS-10 Carabineros de Chile',
+            expiresAt: guardia.fecha_vencimiento ? String(guardia.fecha_vencimiento).slice(0, 10) : '',
+          });
+        }
+        addEmployee(scenario.id, {
+          name: guardia.nombre_completo,
+          rut: guardia.rut,
+          role: guardia.cargo || '',
+          weeklyContractHours:
+            Number(guardia.horas_semanales_max) ||
+            Number(scenario.rules?.maxWeeklyHours) ||
+            42,
+          startDate: guardia.fecha_contrato
+            ? String(guardia.fecha_contrato).slice(0, 10)
+            : scenario.startDate,
+          phone: guardia.telefono || '',
+          preferredShiftIds: [],
+          unavailableWeekdays: [],
+          certifications: certificaciones,
+          active: true,
+        });
+      });
+
+      notify(
+        `${nuevos.length} trabajador${nuevos.length === 1 ? '' : 'es'} importado${nuevos.length === 1 ? '' : 's'} desde Mi empresa.`
+      );
+    } catch (requestError) {
+      notify(requestError.message, 'error');
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="page staff-page">
       <div className="stat-grid stat-grid-compact">
@@ -210,6 +269,15 @@ export default function Staff() {
               <Search size={15} />
               <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar persona o rol…" />
             </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Download}
+              onClick={importarBase}
+              disabled={importing}
+            >
+              {importing ? 'Importando…' : 'Importar base'}
+            </Button>
             <Button size="sm" icon={Plus} onClick={openNew}>Agregar persona</Button>
           </div>
         }

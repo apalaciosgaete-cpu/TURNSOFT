@@ -51,7 +51,8 @@ export default function MasterPlans() {
       <div className="master-toolbar">
         <div className="master-toolbar-filters">
           <span className="master-toolbar-label">
-            <ShieldCheck size={16} /> {planes.length} planes configurados
+            <ShieldCheck size={16} /> {planes.length}{' '}
+            {planes.length === 1 ? 'plan configurado' : 'planes configurados'}
           </span>
         </div>
         <Button icon={Plus} onClick={openCreate}>Nuevo plan</Button>
@@ -133,7 +134,7 @@ export default function MasterPlans() {
             icon={ShieldCheck}
             title="Aún no hay planes"
             description="Crea tu primer plan con precio mensual y límites de clientes, usuarios y guardias."
-            action={<Button icon={Plus} onClick={openCreate}>Crear primer plan</Button>}
+            action={<Button icon={Plus} onClick={openCreate}>Publicar primer plan</Button>}
           />
         </Card>
       )}

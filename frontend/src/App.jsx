@@ -13,6 +13,8 @@ import Legal from './pages/Legal.jsx';
 import Reports from './pages/Reports.jsx';
 import Clients from './pages/Clients.jsx';
 import Support from './pages/Support.jsx';
+import MiEmpresa from './pages/MiEmpresa.jsx';
+import RegisterPage from './pages/RegisterPage.jsx';
 import MasterOverview from './pages/MasterOverview.jsx';
 import MasterCompanies from './pages/MasterCompanies.jsx';
 import MasterPayments from './pages/MasterPayments.jsx';
@@ -33,9 +35,16 @@ function NotFound() {
 }
 
 export default function App() {
-  const { session, isSuperadmin } = useAuth();
+  const { session, isSuperadmin, isOperator } = useAuth();
 
-  if (!session) return <LoginScreen />;
+  if (!session) {
+    return (
+      <Routes>
+        <Route path="/registro" element={<RegisterPage />} />
+        <Route path="*" element={<LoginScreen />} />
+      </Routes>
+    );
+  }
 
   if (isSuperadmin) {
     return (
@@ -65,6 +74,8 @@ export default function App() {
         <Route path="reportes" element={<Reports />} />
         <Route path="legal" element={<Legal />} />
         <Route path="clientes" element={<Clients />} />
+        <Route path="registro" element={<Navigate to="/" replace />} />
+        {isOperator ? <Route path="empresa" element={<MiEmpresa />} /> : null}
         <Route path="soporte" element={<Support />} />
         <Route path="*" element={<NotFound />} />
       </Route>
