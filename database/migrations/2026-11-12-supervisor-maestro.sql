@@ -46,9 +46,12 @@ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Incluye también 'prueba' y 'vencida' (los introduce 2026-11-13) para que esta
+-- migración no falle si se vuelve a ejecutar con empresas en esos estados.
 ALTER TABLE empresas DROP CONSTRAINT IF EXISTS empresas_estado_check;
 ALTER TABLE empresas
-    ADD CONSTRAINT empresas_estado_check CHECK (estado IN ('activa', 'suspendida'));
+    ADD CONSTRAINT empresas_estado_check
+    CHECK (estado IN ('prueba', 'activa', 'suspendida', 'vencida'));
 
 ALTER TABLE empresas DROP CONSTRAINT IF EXISTS empresas_dia_cobro_check;
 ALTER TABLE empresas

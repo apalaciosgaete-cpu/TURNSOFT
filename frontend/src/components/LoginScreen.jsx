@@ -27,6 +27,7 @@ const EMPTY_SETUP = {
   email: '',
   password: '',
   confirm: '',
+  setupToken: '',
 };
 
 export function LoginScreen() {
@@ -75,6 +76,7 @@ export function LoginScreen() {
       nombre: form.nombre.trim(),
       email: form.email.trim(),
       password: form.password,
+      setup_token: form.setupToken.trim(),
     });
     if (!ok) {
       // Si otra sesión completó el setup mientras tanto, refresca el estado.
@@ -172,6 +174,21 @@ export function LoginScreen() {
                   <small>Acceso total a la consola de TURNSOFT.</small>
                 </div>
               </div>
+
+              <label className="field">
+                <span className="field-label">Código de instalación</span>
+                <div className="login-input-wrap">
+                  <KeyRound size={16} />
+                  <input
+                    className="input"
+                    type="password"
+                    value={form.setupToken}
+                    onChange={(event) => set('setupToken', event.target.value)}
+                    placeholder="Definido en el servidor (SETUP_TOKEN)"
+                    autoComplete="off"
+                  />
+                </div>
+              </label>
 
               <label className="field">
                 <span className="field-label">Nombre completo</span>

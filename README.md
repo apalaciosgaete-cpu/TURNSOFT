@@ -89,16 +89,20 @@ Si ya tienes una base creada con la versión anterior:
 
 ```bash
 cd backend
-npm run migrate              # aplica 002_multisector.sql y 003_clientes.sql
+npm run migrate              # aplica solo las migraciones pendientes
 ```
+
+Las migraciones aplicadas se registran en la tabla `schema_migrations`, así que `npm run migrate` se puede repetir sin riesgo. Si tu base ya tiene todas las migraciones aplicadas a mano (sin ese registro), ejecuta **una sola vez** `npm run migrate -- --baseline` para marcarlas como aplicadas sin volver a ejecutarlas.
 
 Variables de entorno del backend (`.env`):
 
 ```env
 PORT=3000
 CORS_ORIGIN=http://localhost:5173,http://127.0.0.1:5173
-JWT_SECRET=cambia_este_valor_en_produccion
+NODE_ENV=development
+JWT_SECRET=                 # obligatorio en producción, mínimo 32 caracteres (openssl rand -hex 48)
 JWT_EXPIRES_IN=24h
+SETUP_TOKEN=                # código para crear el supervisor maestro; sin él el setup queda deshabilitado en producción
 ALLOW_DEMO_AUTH=false
 DB_HOST=localhost
 DB_PORT=5432
@@ -106,6 +110,8 @@ DB_USER=postgres
 DB_PASSWORD=postgres
 DB_NAME=turnsoft_db
 ```
+
+En producción (`NODE_ENV` distinto de `development` o `test`) el servidor **no arranca** si `JWT_SECRET` falta, es un valor de ejemplo o tiene menos de 32 caracteres. El inicio de sesión, el registro, el setup y el motor tienen límites de solicitudes por conexión (y por cuenta en el login).
 
 `ALLOW_DEMO_AUTH=true` habilita un operador demo sin base de datos y está pensado solo para desarrollo local. En producción debe quedar en `false`: si PostgreSQL no está disponible, el login responde `503` en lugar de entregar un token global.
 

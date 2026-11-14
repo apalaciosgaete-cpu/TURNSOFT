@@ -3,6 +3,8 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const { hashPassword } = require('../utils/password');
+const { getJwtSecret, JWT_ALGORITHM } = require('../config/jwt');
+const rateLimits = require('../middleware/rateLimit');
 
 const SECTORES = new Set(['seguridad', 'salud', 'mineria', 'retail', 'logistica']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,8 +55,8 @@ function signToken(user) {
       cliente_nombre: null,
       empresa_nombre: user.empresa_nombre || null,
     },
-    process.env.JWT_SECRET || 'secret_dev',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    getJwtSecret(),
+    { expiresIn: process.env.JWT_EXPIRES_IN || '24h', algorithm: JWT_ALGORITHM }
   );
 }
 
@@ -99,7 +101,7 @@ router.get('/planes', async (req, res) => {
  * 15 días, su cuenta administradora, su configuración legal y la primera
  * mensualidad pendiente para que el supervisor la verifique al recibir el pago.
  */
-router.post('/registro', async (req, res) => {
+router.post('/registro', rateLimits.registro, async (req, res) => {
   const empresaBody = req.body?.empresa || req.body || {};
   const adminBody = req.body?.admin || req.body || {};
 

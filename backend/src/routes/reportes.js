@@ -79,7 +79,7 @@ router.get('/cumplimiento', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
