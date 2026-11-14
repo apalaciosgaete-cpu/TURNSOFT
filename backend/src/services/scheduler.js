@@ -257,10 +257,26 @@ async function plan(scenario, options = {}) {
 }
 
 /** Crea un escenario a partir de un preset demo o de datos explícitos. */
+const LIMITS = { days: 92, employees: 500, shifts: 60 };
+
+function assertScenarioLimits(scenario) {
+  const days = Number(scenario.days) || 28;
+  if (days < 1 || days > LIMITS.days) {
+    throw new Error(`El período debe estar entre 1 y ${LIMITS.days} días.`);
+  }
+  if (Array.isArray(scenario.employees) && scenario.employees.length > LIMITS.employees) {
+    throw new Error(`El escenario supera el máximo de ${LIMITS.employees} trabajadores.`);
+  }
+  if (Array.isArray(scenario.shifts) && scenario.shifts.length > LIMITS.shifts) {
+    throw new Error(`El escenario supera el máximo de ${LIMITS.shifts} turnos.`);
+  }
+}
+
 async function scenarioFromRequest(body = {}) {
   const shared = await loadShared();
   if (body.scenario && typeof body.scenario === 'object') {
     const scenario = clone(body.scenario);
+    assertScenarioLimits(scenario);
     const sector = scenario.sector || body.sector || 'seguridad';
     return {
       ...scenario,

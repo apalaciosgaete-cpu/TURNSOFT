@@ -49,7 +49,7 @@ router.get('/', authenticateToken, async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -136,7 +136,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -154,7 +154,7 @@ router.get('/:id/configuracion-legal', authenticateToken, async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -189,7 +189,7 @@ router.put('/:id/configuracion-legal', authenticateToken, requireOperator, async
     res.json(result.rows[0]);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

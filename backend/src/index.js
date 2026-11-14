@@ -6,6 +6,7 @@ const helmet = require('helmet');
 const path = require('path');
 const { getJwtSecret } = require('./config/jwt');
 const rateLimits = require('./middleware/rateLimit');
+const { authenticateToken } = require('./middleware/auth');
 
 // Falla al arrancar si el secreto JWT falta o es inseguro, en vez de firmar
 // tokens con un valor conocido.
@@ -31,7 +32,7 @@ app.use('/api/clientes', require('./routes/clientes'));
 app.use('/api/guardias', require('./routes/guardias'));
 app.use('/api/turno-plantillas', require('./routes/turnoPlantillas'));
 app.use('/api/puestos', require('./routes/puestos'));
-app.use('/api/motor', rateLimits.motor, require('./routes/motor'));
+app.use('/api/motor', authenticateToken, rateLimits.motor, require('./routes/motor'));
 app.use('/api/horarios', require('./routes/horarios'));
 app.use('/api/solicitudes', require('./routes/solicitudes'));
 app.use('/api/reportes', require('./routes/reportes'));

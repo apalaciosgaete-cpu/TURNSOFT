@@ -297,7 +297,6 @@ router.post('/generar', authenticateToken, async (req, res) => {
       persistence = {
         persisted: false,
         reason: 'base_de_datos_no_disponible',
-        detail: error.message,
       };
     }
 
@@ -313,7 +312,7 @@ router.post('/generar', authenticateToken, async (req, res) => {
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
     console.error('[horarios/generar]', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -339,7 +338,7 @@ router.get('/semanal', authenticateToken, async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -363,7 +362,7 @@ router.get('/escenarios', authenticateToken, async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -385,7 +384,7 @@ router.get('/escenarios/:id', authenticateToken, async (req, res) => {
     res.json(result.rows[0]);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -412,7 +411,7 @@ router.post('/escenarios/:id/publicar', authenticateToken, async (req, res) => {
     res.json({ message: 'Escenario publicado.', escenario: result.rows[0] });
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 
@@ -442,7 +441,7 @@ router.post('/publicar', authenticateToken, async (req, res) => {
     res.json({ message: 'Horarios publicados', horarios: result.rows });
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

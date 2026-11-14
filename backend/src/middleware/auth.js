@@ -57,6 +57,23 @@ async function getEmpresaEstado(empresaId) {
   return empresa;
 }
 
+const usuarioCache = new Map();
+
+async function usuarioActivo(userId) {
+  const key = String(userId);
+  const cached = usuarioCache.get(key);
+  if (cached && Date.now() - cached.at < ESTADO_CACHE_TTL) return cached.activo;
+  const result = await pool.query('SELECT activo FROM usuarios WHERE id = $1', [userId]);
+  const activo = Boolean(result.rows[0]?.activo);
+  usuarioCache.set(key, { activo, at: Date.now() });
+  return activo;
+}
+
+function clearUsuarioCache(userId) {
+  if (userId) usuarioCache.delete(String(userId));
+  else usuarioCache.clear();
+}
+
 function clearEmpresaStatusCache(empresaId) {
   if (empresaId) {
     estadoCache.delete(String(empresaId));
@@ -93,10 +110,19 @@ const authenticateToken = (req, res, next) => {
 
   jwt.verify(token, getJwtSecret(), { algorithms: [JWT_ALGORITHM] }, async (err, user) => {
     if (err) {
-      return res.status(403).json({ error: 'Token inválido o expirado' });
+      return res.status(401).json({ error: 'Token inválido o expirado' });
     }
 
     req.user = user;
+
+    try {
+      if (!(await usuarioActivo(user.id))) {
+        return res.status(401).json({ error: 'La cuenta ya no está disponible.' });
+      }
+    } catch (error) {
+      console.error('[auth/usuario-activo]', error);
+      return res.status(503).json({ error: 'No se pudo verificar la cuenta.' });
+    }
 
     // El supervisor maestro es global y no pertenece a una empresa.
     if (user.rol === 'superadmin' || !user.empresa_id) {
@@ -123,6 +149,7 @@ const authenticateToken = (req, res, next) => {
 module.exports = {
   authenticateToken,
   clearEmpresaStatusCache,
+  clearUsuarioCache,
   empresaAccess,
   expireTrialIfNeeded,
 };
