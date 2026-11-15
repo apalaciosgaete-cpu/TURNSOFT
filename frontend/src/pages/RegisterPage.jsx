@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   Building2,
-  CheckCircle2,
   KeyRound,
   LockKeyhole,
   Sparkles,
@@ -12,6 +11,7 @@ import {
 import { SECTOR_META } from '@shared/legal.js';
 import { useAuth } from '../store/AuthContext.jsx';
 import { BrandMark } from '../components/Brand.jsx';
+import { ShiftPreview } from '../components/ShiftPreview.jsx';
 
 const SECTORES = Object.values(SECTOR_META);
 const EMPTY = {
@@ -94,50 +94,9 @@ export default function RegisterPage() {
           <span className="login-eyebrow">
             <Sparkles size={15} /> 15 días de prueba
           </span>
-          <h1>Tu empresa entra<br />y prueba TURNSOFT.</h1>
-          <p>
-            Crea la cuenta de tu empresa y comienza a ordenar
-            clientes, trabajadores y horarios. Sin tarjeta para empezar.
-          </p>
-
-          <div className="login-benefits">
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Prueba completa:</strong> 15 días con acceso a toda la operación.</span>
-            </div>
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Sin compromiso:</strong> no se pide plan ni medio de pago para probar.</span>
-            </div>
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Aislamiento:</strong> tu empresa solo ve su propia operación.</span>
-            </div>
-          </div>
-
-          <div className="register-story-steps">
-            <div>
-              <span>1</span>
-              <div>
-                <strong>Registra tu empresa</strong>
-                <small>Datos de la empresa y del administrador.</small>
-              </div>
-            </div>
-            <div>
-              <span>2</span>
-              <div>
-                <strong>Ordena tu base</strong>
-                <small>Trabajadores y horarios de entrada/salida.</small>
-              </div>
-            </div>
-            <div>
-              <span>3</span>
-              <div>
-                <strong>Genera horarios</strong>
-                <small>Clientes, escenarios y cumplimiento legal.</small>
-              </div>
-            </div>
-          </div>
+          <h1>Tus turnos, listos<br />en minutos.</h1>
+          <p>El motor propone el horario y valida la normativa chilena. Tú decides.</p>
+          <ShiftPreview />
         </div>
 
         <div className="login-story-foot">
@@ -153,13 +112,13 @@ export default function RegisterPage() {
               <span className="login-card-eyebrow">Registro de empresa</span>
               <h2>Crea tu cuenta</h2>
             </div>
-            <Link className="register-login-link" to="/">
+            <Link className="register-login-link" to="/ingresar">
               Ya tengo cuenta <ArrowRight size={14} />
             </Link>
           </div>
           <p className="login-card-sub">
-            La prueba de 15 días comienza al registrarte. Los planes se
-            anunciarán antes del lanzamiento comercial.
+            Sin tarjeta ni plan para empezar. Los planes se anunciarán antes
+            del lanzamiento comercial.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
@@ -340,7 +299,7 @@ export default function RegisterPage() {
 
         <p className="login-help">
           <LockKeyhole size={14} />
-          ¿Ya registraste tu empresa? <Link className="register-help-link" to="/">Inicia sesión</Link>
+          ¿Ya registraste tu empresa? <Link className="register-help-link" to="/ingresar">Inicia sesión</Link>
         </p>
       </section>
     </div>
