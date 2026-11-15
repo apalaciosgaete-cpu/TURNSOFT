@@ -15,6 +15,7 @@ import Clients from './pages/Clients.jsx';
 import Support from './pages/Support.jsx';
 import MiEmpresa from './pages/MiEmpresa.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import Landing from './pages/Landing.jsx';
 import MasterOverview from './pages/MasterOverview.jsx';
 import MasterCompanies from './pages/MasterCompanies.jsx';
 import MasterPayments from './pages/MasterPayments.jsx';
@@ -40,7 +41,7 @@ export default function App() {
   if (!session) {
     return (
       <Routes>
-        <Route path="/" element={<RegisterPage />} />
+        <Route path="/" element={<Landing />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/ingresar" element={<LoginScreen />} />
         <Route path="*" element={<LoginScreen />} />
