@@ -147,12 +147,15 @@ export function TurnsoftProvider({ children }) {
     [session, isOperator, activeClientId]
   );
 
+  // Solo las mutaciones pasan por aquí: el validador consulta y aprueba, no edita.
+  const readOnly = Boolean(session?.readOnly);
   const findOwned = useCallback(
     (previous, scenarioId) => {
+      if (readOnly) return null;
       const scenario = previous.scenarios.find((item) => item.id === scenarioId);
       return canAccessScenario(scenario) ? scenario : null;
     },
-    [canAccessScenario]
+    [canAccessScenario, readOnly]
   );
 
   const visibleScenarios = useMemo(() => {
@@ -265,6 +268,10 @@ export function TurnsoftProvider({ children }) {
     (scenarioId) => {
       const targetId = scenarioId || activeScenario?.id;
       if (!targetId) return;
+      if (readOnly) {
+        notify('Tu cuenta de validador solo puede consultar y aprobar.', 'error');
+        return;
+      }
       if (generateTimer.current) window.clearTimeout(generateTimer.current);
       setBusyScenarioId(targetId);
       generateTimer.current = window.setTimeout(() => {
@@ -283,7 +290,7 @@ export function TurnsoftProvider({ children }) {
         notify('Horario generado y validado. Las novedades manuales anteriores se reiniciaron.');
       }, 60);
     },
-    [activeScenario, findOwned, notify]
+    [activeScenario, readOnly, findOwned, notify]
   );
 
   const setCell = useCallback(
@@ -333,7 +340,7 @@ export function TurnsoftProvider({ children }) {
   const registerAbsence = useCallback(
     (scenarioId, { employeeId, date, portion = 'full', halfPeriod = 'first', reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
-      if (!scenario || !canAccessScenario(scenario)) {
+      if (!scenario || readOnly || !canAccessScenario(scenario)) {
         return { ok: false, error: 'No tienes acceso a este escenario.' };
       }
       if (!scenario.schedule) {
@@ -422,13 +429,13 @@ export function TurnsoftProvider({ children }) {
       );
       return { ok: true };
     },
-    [state.scenarios, canAccessScenario, findOwned, notify, session]
+    [state.scenarios, readOnly, canAccessScenario, findOwned, notify, session]
   );
 
   const swapRestDay = useCallback(
     (scenarioId, { employeeId, offDate, workDate, reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
-      if (!scenario || !canAccessScenario(scenario)) {
+      if (!scenario || readOnly || !canAccessScenario(scenario)) {
         return { ok: false, error: 'No tienes acceso a este escenario.' };
       }
       if (!scenario.schedule) {
@@ -507,13 +514,13 @@ export function TurnsoftProvider({ children }) {
       );
       return { ok: true };
     },
-    [state.scenarios, canAccessScenario, findOwned, notify, session]
+    [state.scenarios, readOnly, canAccessScenario, findOwned, notify, session]
   );
 
   const coverAbsence = useCallback(
     (scenarioId, { employeeId, date, replacementId, reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
-      if (!scenario || !canAccessScenario(scenario)) {
+      if (!scenario || readOnly || !canAccessScenario(scenario)) {
         return { ok: false, error: 'No tienes acceso a este escenario.' };
       }
       if (!scenario.schedule) {
@@ -644,13 +651,13 @@ export function TurnsoftProvider({ children }) {
       );
       return { ok: true };
     },
-    [state.scenarios, canAccessScenario, findOwned, notify, session]
+    [state.scenarios, readOnly, canAccessScenario, findOwned, notify, session]
   );
 
   const removeException = useCallback(
     (scenarioId, exceptionId) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
-      if (!scenario || !canAccessScenario(scenario)) {
+      if (!scenario || readOnly || !canAccessScenario(scenario)) {
         return { ok: false, error: 'No tienes acceso a este escenario.' };
       }
       if (!scenario.schedule) {
@@ -681,7 +688,7 @@ export function TurnsoftProvider({ children }) {
       notify('Novedad anulada y grilla restaurada.', 'info');
       return { ok: true };
     },
-    [state.scenarios, canAccessScenario, findOwned, notify]
+    [state.scenarios, readOnly, canAccessScenario, findOwned, notify]
   );
 
   const updateRules = useCallback(
@@ -911,6 +918,10 @@ export function TurnsoftProvider({ children }) {
   const addScenario = useCallback(
     (data) => {
       if (!session) return null;
+      if (readOnly) {
+        notify('Tu cuenta de validador solo puede consultar y aprobar.', 'error');
+        return null;
+      }
       const requestedClientId = data.clientId || null;
       const targetClientId = isOperator
         ? requestedClientId || activeClientId || null
@@ -963,7 +974,7 @@ export function TurnsoftProvider({ children }) {
       notify(`Escenario creado para ${client.name}. Ajusta la dotación y genera el horario.`, 'info');
       return id;
     },
-    [session, isOperator, activeClientId, clients, notify]
+    [session, readOnly, isOperator, activeClientId, clients, notify]
   );
 
   const duplicateScenario = useCallback(
@@ -1083,6 +1094,7 @@ export function TurnsoftProvider({ children }) {
       activeClient,
       activeClientId,
       isOperator,
+      readOnly,
       clientSummaries,
       session,
     }),
@@ -1122,6 +1134,7 @@ export function TurnsoftProvider({ children }) {
       activeClient,
       activeClientId,
       isOperator,
+      readOnly,
       clientSummaries,
       session,
     ]

@@ -56,8 +56,8 @@ export default function RegisterPage() {
     if (form.email_contacto && !isValidEmail(form.email_contacto)) {
       return setError('Ingresa un correo de contacto válido.');
     }
-    if (!form.nombre.trim()) return setError('Ingresa el nombre del administrador.');
-    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para el administrador.');
+    if (!form.nombre.trim()) return setError('Ingresa tu nombre completo.');
+    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para tu acceso.');
     if (form.password.length < 8) return setError('La clave debe tener al menos 8 caracteres.');
     if (form.password !== form.confirm) return setError('Las claves no coinciden.');
 
@@ -117,8 +117,8 @@ export default function RegisterPage() {
             </Link>
           </div>
           <p className="login-card-sub">
-            Sin tarjeta ni plan para empezar. Los planes se anunciarán antes
-            del lanzamiento comercial.
+            Primero creas la empresa. Luego, dentro de TURNSOFT, tú asignas a
+            los administradores y validadores. Sin tarjeta ni plan para empezar.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
@@ -218,14 +218,14 @@ export default function RegisterPage() {
             <div className="login-section-head">
               <span className="login-section-icon"><UserRound size={16} /></span>
               <div>
-                <strong>Cuenta administradora</strong>
-                <small>Con este acceso entrarás a la operación de tu empresa.</small>
+                <strong>Tu acceso como titular</strong>
+                <small>Serás el titular de la empresa y desde adentro asignarás a los demás.</small>
               </div>
             </div>
 
             <div className="register-grid">
               <label className="field register-full">
-                <span className="field-label">Nombre completo</span>
+                <span className="field-label">Tu nombre completo</span>
                 <input
                   className="input"
                   value={form.nombre}
@@ -244,7 +244,7 @@ export default function RegisterPage() {
                     type="email"
                     value={form.email}
                     onChange={(event) => set('email', event.target.value)}
-                    placeholder="admin@empresa.cl"
+                    placeholder="tu.correo@empresa.cl"
                     autoComplete="username"
                   />
                 </div>

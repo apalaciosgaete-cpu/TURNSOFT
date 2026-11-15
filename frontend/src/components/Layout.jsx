@@ -12,6 +12,7 @@ import {
   Headphones,
   Info,
   LayoutDashboard,
+  UserCog,
   LogOut,
   Menu,
   Plus,
@@ -41,6 +42,7 @@ const PAGE_META = {
   '/reportes': { title: 'Reportes', subtitle: 'Métricas de cumplimiento, hallazgos y exportación.' },
   '/legal': { title: 'Base legal', subtitle: 'Fuentes, hitos de jornada y criterios aplicados en Chile.' },
   '/clientes': { title: 'Clientes', subtitle: 'Cuentas bajo la operación, aislamiento y acceso a cada servicio.' },
+  '/usuarios': { title: 'Usuarios', subtitle: 'Asigna administradores y validadores de tu empresa.' },
   '/empresa': { title: 'Mi empresa', subtitle: 'Datos de la empresa, base de trabajadores y horarios de entrada y salida.' },
   '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con TURNSOFT.' },
 };
@@ -62,6 +64,8 @@ export function Layout() {
   const {
     session,
     isOperator,
+    readOnly,
+    canManageUsers,
     clients,
     activeClient,
     activeClientId,
@@ -95,6 +99,9 @@ export function Layout() {
         { to: '/', label: 'Panel', icon: LayoutDashboard, end: true },
         ...(isOperator
           ? [{ to: '/empresa', label: 'Mi empresa', icon: Building2 }]
+          : []),
+        ...(canManageUsers
+          ? [{ to: '/usuarios', label: 'Usuarios', icon: UserCog }]
           : []),
         {
           to: '/clientes',
@@ -224,9 +231,11 @@ export function Layout() {
               No hay escenarios para esta cuenta. Crea el primero para comenzar.
             </div>
           )}
-          <button type="button" className="scenario-add" onClick={() => setScenarioModal(true)}>
-            <Plus size={15} /> Nuevo escenario
-          </button>
+          {readOnly ? null : (
+            <button type="button" className="scenario-add" onClick={() => setScenarioModal(true)}>
+              <Plus size={15} /> Nuevo escenario
+            </button>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -255,7 +264,15 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-footer">
-          {isOperator ? (
+          {readOnly ? (
+            <div className="sidebar-legal-card">
+              <div className="sidebar-legal-top">
+                <ShieldAlert size={16} />
+                <strong>Cuenta de validador</strong>
+              </div>
+              <p>Puedes consultar toda la operación y aprobar horarios y solicitudes. Los cambios los hace el administrador.</p>
+            </div>
+          ) : isOperator ? (
             <div className="sidebar-legal-card">
               <div className="sidebar-legal-top">
                 <ShieldAlert size={16} />
@@ -279,7 +296,7 @@ export function Layout() {
               <strong>{session?.name}</strong>
               <span>
                 {isOperator
-                  ? `Operador · ${session?.empresa || 'Mi empresa'}`
+                  ? `${session?.rolLabel || 'Operador'} · ${session?.empresa || 'Mi empresa'}`
                   : `Cliente · ${activeClient?.name || session?.clientName}`}
               </span>
             </div>
@@ -330,7 +347,7 @@ export function Layout() {
           </div>
           <div className="topbar-actions">
             <span className="topbar-sub">{meta.subtitle}</span>
-            {location.pathname === '/soporte' ? null : (
+            {location.pathname === '/soporte' || location.pathname === '/usuarios' || readOnly ? null : (
               <Button
                 variant="primary"
                 icon={busy ? RefreshCw : Sparkles}

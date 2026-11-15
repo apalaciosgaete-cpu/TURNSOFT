@@ -39,7 +39,7 @@ function emptyShift() {
 }
 
 export default function Shifts() {
-  const { activeScenario: scenario, addShift, updateShift, removeShift, notify } = useTurnsoft();
+  const { activeScenario: scenario, addShift, updateShift, removeShift, notify, readOnly } = useTurnsoft();
   const { token } = useAuth();
   const [editor, setEditor] = useState(null);
   const [form, setForm] = useState(emptyShift);
@@ -169,16 +169,20 @@ export default function Shifts() {
         subtitle="La cobertura indica cuántas personas se necesitan cada día. Usa 0 para cerrar la operación ese día."
         actions={
           <div className="card-actions-row">
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Download}
-              onClick={importarBase}
-              disabled={importing}
-            >
-              {importing ? 'Importando…' : 'Importar base'}
-            </Button>
-            <Button size="sm" icon={Plus} onClick={openNew}>Nuevo turno</Button>
+            {readOnly ? null : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={Download}
+                  onClick={importarBase}
+                  disabled={importing}
+                >
+                  {importing ? 'Importando…' : 'Importar base'}
+                </Button>
+                <Button size="sm" icon={Plus} onClick={openNew}>Nuevo turno</Button>
+              </>
+            )}
           </div>
         }
       >
@@ -187,7 +191,7 @@ export default function Shifts() {
             icon={Clock3}
             title="No hay turnos configurados"
             description="Crea al menos una plantilla para que el motor pueda asignar personas."
-            action={<Button icon={Plus} onClick={openNew}>Crear turno</Button>}
+            action={readOnly ? null : <Button icon={Plus} onClick={openNew}>Crear turno</Button>}
           />
         ) : (
           <div className="shift-grid">
@@ -246,7 +250,7 @@ export default function Shifts() {
                         <span className="muted">Sin certificaciones exigidas</span>
                       )}
                     </div>
-                    <div className="row-actions">
+                    <div className="row-actions" hidden={readOnly}>
                       <button type="button" className="icon-btn" title="Editar turno" onClick={() => openEdit(shift)}>
                         <Pencil size={16} />
                       </button>
@@ -268,7 +272,7 @@ export default function Shifts() {
               );
             })}
 
-            <button type="button" className="shift-add-card" onClick={openNew}>
+            <button type="button" className="shift-add-card" onClick={openNew} hidden={readOnly}>
               <span><Plus size={22} /></span>
               <strong>Agregar turno</strong>
               <small>Define horario, colación y cobertura</small>

@@ -157,7 +157,7 @@ function toPlantillaForm(plantilla) {
 }
 
 export default function MiEmpresa() {
-  const { token } = useAuth();
+  const { token, readOnly } = useAuth();
   const { notify } = useTurnsoft();
 
   const [empresa, setEmpresa] = useState(null);
@@ -491,7 +491,8 @@ export default function MiEmpresa() {
   if (!empresa) return null;
 
   const sector = SECTOR_META[empresa.sector] || SECTOR_META.seguridad;
-  const puedeEditarEmpresa = empresa.estado !== 'suspendida' && empresa.estado !== 'vencida';
+  const puedeEditarEmpresa =
+    !readOnly && empresa.estado !== 'suspendida' && empresa.estado !== 'vencida';
 
   return (
     <div className="page company-page">
@@ -556,6 +557,7 @@ export default function MiEmpresa() {
         }
       >
         <form className="form-grid company-form" onSubmit={guardarEmpresa}>
+          <fieldset className="readonly-fieldset is-contents" disabled={readOnly}>
           <Field label="Razón social" className="field-full">
             <input
               className="input"
@@ -635,6 +637,7 @@ export default function MiEmpresa() {
               {saving ? 'Guardando…' : 'Guardar datos'}
             </Button>
           </div>
+          </fieldset>
         </form>
       </Card>
 
@@ -644,7 +647,7 @@ export default function MiEmpresa() {
         actions={
           <div className="card-actions-row">
             <Badge tone="neutral">{activos} activos de {guardias.length}</Badge>
-            <Button size="sm" icon={Plus} onClick={abrirGuardiaNuevo}>Agregar trabajador</Button>
+            <Button size="sm" icon={Plus} onClick={abrirGuardiaNuevo} hidden={readOnly}>Agregar trabajador</Button>
           </div>
         }
         noPadding
@@ -701,7 +704,7 @@ export default function MiEmpresa() {
                       </Badge>
                     </td>
                     <td className="actions-col">
-                      <div className="row-actions">
+                      <div className="row-actions" hidden={readOnly}>
                         <button
                           type="button"
                           className="icon-btn"
@@ -738,7 +741,7 @@ export default function MiEmpresa() {
             icon={Users}
             title="Tu base de trabajadores está vacía"
             description="Agrega a las personas de tu empresa. Después podrás importarlas al escenario desde Personal."
-            action={<Button icon={Plus} onClick={abrirGuardiaNuevo}>Agregar primer trabajador</Button>}
+            action={readOnly ? null : <Button icon={Plus} onClick={abrirGuardiaNuevo}>Agregar primer trabajador</Button>}
           />
         )}
       </Card>
@@ -749,7 +752,7 @@ export default function MiEmpresa() {
         actions={
           <div className="card-actions-row">
             <Badge tone="neutral">{plantillas.length} horarios</Badge>
-            <Button size="sm" icon={Plus} onClick={abrirPlantillaNueva}>Nuevo horario</Button>
+            <Button size="sm" icon={Plus} onClick={abrirPlantillaNueva} hidden={readOnly}>Nuevo horario</Button>
           </div>
         }
       >
@@ -768,7 +771,7 @@ export default function MiEmpresa() {
                       {plantilla.es_nocturno ? ' · nocturno' : ''}
                     </span>
                   </div>
-                  <div className="company-shift-actions">
+                  <div className="company-shift-actions" hidden={readOnly}>
                     <button type="button" className="icon-btn" title="Editar horario" onClick={() => abrirPlantillaEditar(plantilla)}>
                       <Pencil size={16} />
                     </button>
@@ -809,7 +812,7 @@ export default function MiEmpresa() {
             icon={Clock3}
             title="Aún no hay horarios base"
             description="Crea tus turnos de entrada y salida para reutilizarlos en todos los escenarios de la empresa."
-            action={<Button icon={Plus} onClick={abrirPlantillaNueva}>Crear primer horario</Button>}
+            action={readOnly ? null : <Button icon={Plus} onClick={abrirPlantillaNueva}>Crear primer horario</Button>}
           />
         )}
       </Card>

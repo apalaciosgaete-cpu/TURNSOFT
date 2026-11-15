@@ -1333,6 +1333,11 @@ a:hover {
   color: var(--muted);
 }
 
+.person-cell .avatar {
+  display: inline-flex;
+  color: #fff;
+}
+
 .avatar {
   display: inline-flex;
   align-items: center;
@@ -7887,4 +7892,24 @@ thead .summary-cell {
   .master-trial-summary {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== Modo solo lectura (cuenta de validador) ===== */
+[hidden] {
+  display: none !important;
+}
+
+.readonly-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.readonly-fieldset:disabled {
+  opacity: 0.92;
+}
+
+.readonly-fieldset.is-contents {
+  display: contents;
 }

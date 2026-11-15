@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
-const { scopedClienteId, scopedEmpresaId } = require('../middleware/tenant');
+const { scopedClienteId, scopedEmpresaId, denyValidador } = require('../middleware/tenant');
 
 // Listar puestos de una sucursal, filtrados por empresa y cliente.
 router.get('/', authenticateToken, async (req, res) => {
@@ -29,7 +29,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Crear puesto dentro de una sucursal permitida.
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, denyValidador, async (req, res) => {
   try {
     const {
       sucursal_id,

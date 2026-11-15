@@ -15,4 +15,16 @@ function verifyPassword(password, stored) {
   return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
 }
 
-module.exports = { hashPassword, verifyPassword };
+const TEMP_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'; // 56 símbolos
+
+/** Clave temporal legible (sin 0/O, 1/l/I), sin sesgo de módulo. */
+function generateTempPassword(length = 12) {
+  let out = '';
+  while (out.length < length) {
+    const byte = crypto.randomBytes(1)[0];
+    if (byte < 224) out += TEMP_ALPHABET[byte % TEMP_ALPHABET.length]; // 224 = 56 * 4
+  }
+  return out;
+}
+
+module.exports = { hashPassword, verifyPassword, generateTempPassword };

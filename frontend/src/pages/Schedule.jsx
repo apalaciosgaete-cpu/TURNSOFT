@@ -41,6 +41,7 @@ export default function Schedule() {
     removeException,
     notify,
     isStale,
+    readOnly,
   } = useTurnsoft();
   const [query, setQuery] = useState('');
   const [novedad, setNovedad] = useState({
@@ -204,22 +205,26 @@ export default function Schedule() {
           ) : null}
         </div>
         <div className="toolbar-actions">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={CalendarClock}
-            onClick={() =>
-              setNovedad({ open: true, employeeId: '', date: '', tab: 'absence' })
-            }
-          >
-            Novedades{exceptionCount ? ` · ${exceptionCount}` : ''}
-          </Button>
+          {readOnly ? null : (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={CalendarClock}
+              onClick={() =>
+                setNovedad({ open: true, employeeId: '', date: '', tab: 'absence' })
+              }
+            >
+              Novedades{exceptionCount ? ` · ${exceptionCount}` : ''}
+            </Button>
+          )}
           <Button variant="ghost" size="sm" icon={Download} onClick={exportCsv} disabled={!schedule}>CSV</Button>
           <Button variant="ghost" size="sm" icon={FileJson} onClick={exportJson} disabled={!schedule}>JSON</Button>
           <Button variant="ghost" size="sm" icon={Printer} onClick={() => window.print()} disabled={!schedule}>Imprimir</Button>
-          <Button size="sm" icon={busy ? RefreshCw : Sparkles} onClick={() => generate(scenario.id)} disabled={busy} className={busy ? 'is-busy' : ''}>
-            {busy ? 'Generando…' : schedule ? 'Regenerar' : 'Generar horario'}
-          </Button>
+          {readOnly ? null : (
+            <Button size="sm" icon={busy ? RefreshCw : Sparkles} onClick={() => generate(scenario.id)} disabled={busy} className={busy ? 'is-busy' : ''}>
+              {busy ? 'Generando…' : schedule ? 'Regenerar' : 'Generar horario'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -229,7 +234,7 @@ export default function Schedule() {
             icon={Sparkles}
             title="Este escenario todavía no tiene horario"
             description="El motor distribuirá la dotación según el patrón del sector, las reglas de jornada, los descansos y las certificaciones vigentes."
-            action={<Button icon={Sparkles} onClick={() => generate(scenario.id)} disabled={busy}>{busy ? 'Generando…' : 'Generar horario'}</Button>}
+            action={readOnly ? null : <Button icon={Sparkles} onClick={() => generate(scenario.id)} disabled={busy}>{busy ? 'Generando…' : 'Generar horario'}</Button>}
           />
         </Card>
       ) : (
@@ -241,7 +246,9 @@ export default function Schedule() {
                 <strong>La configuración cambió después de generar este horario.</strong>
                 <p>Regenera para aplicar los nuevos turnos, reglas o dotación. La validación actual ya usa la configuración vigente.</p>
               </div>
-              <Button size="sm" variant="soft" icon={RefreshCw} onClick={() => generate(scenario.id)}>Regenerar</Button>
+              {readOnly ? null : (
+                <Button size="sm" variant="soft" icon={RefreshCw} onClick={() => generate(scenario.id)}>Regenerar</Button>
+              )}
             </div>
           ) : null}
 
@@ -362,7 +369,7 @@ export default function Schedule() {
                               >
                                 <strong>{cell.portion === 'half' ? '½ turno' : 'Ausencia'}</strong>
                                 <span>{shift?.code || '—'}</span>
-                                {cell.exceptionId ? (
+                                {cell.exceptionId && !readOnly ? (
                                   <button
                                     type="button"
                                     className="cell-clear"
@@ -384,6 +391,7 @@ export default function Schedule() {
                                 <select
                                   className={`cell-select ${shift ? 'has-shift' : 'is-off'}`}
                                   value={shift?.id || ''}
+                                  disabled={readOnly}
                                   onChange={(event) => setCell(scenario.id, employee.id, date, event.target.value || null)}
                                   title={`${employee.name} · ${formatDateLong(date)}`}
                                   style={
@@ -407,6 +415,7 @@ export default function Schedule() {
                                 <button
                                   type="button"
                                   className="cell-novedad"
+                                  hidden={readOnly}
                                   title="Registrar ausencia, cambio de día libre o cobertura"
                                   onClick={() =>
                                     setNovedad({
