@@ -130,9 +130,6 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
   if (emailContacto && !EMAIL_RE.test(emailContacto)) {
     return res.status(400).json({ error: 'Ingresa un correo de contacto válido.' });
   }
-  if (!planId) {
-    return res.status(400).json({ error: 'Selecciona el plan con el que quieres comenzar.' });
-  }
   if (!adminNombre) {
     return res.status(400).json({ error: 'Ingresa el nombre del administrador.' });
   }
@@ -151,14 +148,19 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
     client = await pool.connect();
     await client.query('BEGIN');
 
-    const planResult = await client.query(
-      'SELECT * FROM planes WHERE id = $1 AND activo = true',
-      [planId]
-    );
-    if (!planResult.rows.length) {
-      throw httpError(400, 'El plan seleccionado ya no está disponible. Elige otro plan.');
+    // El plan es opcional: mientras la app no se comercializa, la empresa
+    // entra a la prueba de 15 días sin plan ni cobro asociado.
+    let plan = null;
+    if (planId) {
+      const planResult = await client.query(
+        'SELECT * FROM planes WHERE id = $1 AND activo = true',
+        [planId]
+      );
+      if (!planResult.rows.length) {
+        throw httpError(400, 'El plan seleccionado ya no está disponible. Elige otro plan.');
+      }
+      plan = planResult.rows[0];
     }
-    const plan = planResult.rows[0];
 
     const empresaResult = await client.query(
       `INSERT INTO empresas
@@ -172,7 +174,7 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
        RETURNING id, razon_social, rut_empresa, sector, estado, plan_id, dia_cobro,
                  email_contacto, telefono, direccion, ciudad,
                  prueba_inicio, prueba_fin, creado_en`,
-      [razonSocial, rutEmpresa, sector, planId, String(PRUEBA_DIAS), emailContacto || null, telefono, direccion, ciudad]
+      [razonSocial, rutEmpresa, sector, plan ? plan.id : null, String(PRUEBA_DIAS), emailContacto || null, telefono, direccion, ciudad]
     );
     const empresa = empresaResult.rows[0];
 
@@ -191,17 +193,21 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
       [empresa.id, adminNombre, adminEmail, hashPassword(adminPassword)]
     );
 
-    // Primera mensualidad pendiente: el supervisor la verifica cuando el pago
-    // se confirma y, en ese mismo paso, la empresa pasa a activa.
-    const pagoResult = await client.query(
-      `INSERT INTO pagos
-         (empresa_id, plan_id, periodo, monto, estado, fecha_vencimiento, notas)
-       VALUES ($1, $2, to_char(NOW() + ($4 || ' days')::interval, 'YYYY-MM'),
-               $3, 'pendiente', (NOW() + ($4 || ' days')::interval)::date,
-               'Primer mes contratado al finalizar la prueba de 15 días.')
-       RETURNING id, periodo, monto, estado, fecha_vencimiento`,
-      [empresa.id, planId, plan.precio_mensual, String(PRUEBA_DIAS)]
-    );
+    // Primera mensualidad pendiente: solo si la empresa eligió un plan. El
+    // supervisor la verifica al confirmarse el pago y la empresa pasa a activa.
+    let pago = null;
+    if (plan) {
+      const pagoResult = await client.query(
+        `INSERT INTO pagos
+           (empresa_id, plan_id, periodo, monto, estado, fecha_vencimiento, notas)
+         VALUES ($1, $2, to_char(NOW() + ($4 || ' days')::interval, 'YYYY-MM'),
+                 $3, 'pendiente', (NOW() + ($4 || ' days')::interval)::date,
+                 'Primer mes contratado al finalizar la prueba de 15 días.')
+         RETURNING id, periodo, monto, estado, fecha_vencimiento`,
+        [empresa.id, plan.id, plan.precio_mensual, String(PRUEBA_DIAS)]
+      );
+      pago = pagoResult.rows[0];
+    }
 
     await client.query('COMMIT');
 
@@ -210,19 +216,17 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
       empresa_nombre: empresa.razon_social,
       empresa_estado: empresa.estado,
       prueba_fin: empresa.prueba_fin,
-      plan_nombre: plan.nombre,
+      plan_nombre: plan ? plan.nombre : null,
     };
 
     return res.status(201).json({
       token: signToken(user),
       user: publicUser(user),
       empresa,
-      plan: {
-        id: plan.id,
-        nombre: plan.nombre,
-        precio_mensual: plan.precio_mensual,
-      },
-      pago: pagoResult.rows[0],
+      plan: plan
+        ? { id: plan.id, nombre: plan.nombre, precio_mensual: plan.precio_mensual }
+        : null,
+      pago,
       prueba: {
         dias: PRUEBA_DIAS,
         inicia: empresa.prueba_inicio,

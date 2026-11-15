@@ -1,21 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
-  Building2,
-  Check,
   CheckCircle2,
-  CreditCard,
-  Headphones,
   KeyRound,
   LockKeyhole,
-  ShieldCheck,
   Sparkles,
-  UserRound,
 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
-import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { money } from '../lib/format.js';
+import { useAuth } from '../store/AuthContext.jsx';
 import { BrandMark } from '../components/Brand.jsx';
 
 const SECTORES = Object.values(SECTOR_META);
@@ -27,7 +20,6 @@ const EMPTY = {
   telefono: '',
   direccion: '',
   ciudad: '',
-  plan_id: '',
   nombre: '',
   email: '',
   password: '',
@@ -43,42 +35,10 @@ function validRut(value) {
   return /^\d{6,8}-[0-9kK]$/.test(normalized);
 }
 
-function limitLabel(value, singular, plural) {
-  if (value === null || value === undefined) return `Sin límite de ${plural}`;
-  if (Number(value) === 1) return `1 ${singular}`;
-  return `${value} ${plural}`;
-}
-
 export default function RegisterPage() {
   const { register, authError, clearAuthError, busy } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
-  const [planes, setPlanes] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
-  const [plansError, setPlansError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await apiRequest('/public/planes');
-        if (!cancelled) setPlanes(Array.isArray(data) ? data : []);
-      } catch (requestError) {
-        if (!cancelled) setPlansError(requestError.message);
-      } finally {
-        if (!cancelled) setLoadingPlans(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const selectedPlan = useMemo(
-    () => planes.find((plan) => plan.id === form.plan_id) || null,
-    [planes, form.plan_id]
-  );
-
   const set = (key, value) => {
     clearAuthError();
     setError('');
@@ -98,7 +58,6 @@ export default function RegisterPage() {
     if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para el administrador.');
     if (form.password.length < 8) return setError('La clave debe tener al menos 8 caracteres.');
     if (form.password !== form.confirm) return setError('Las claves no coinciden.');
-    if (!form.plan_id) return setError('Selecciona un plan para comenzar.');
 
     await register({
       empresa: {
@@ -109,7 +68,6 @@ export default function RegisterPage() {
         telefono: form.telefono.trim(),
         direccion: form.direccion.trim(),
         ciudad: form.ciudad.trim(),
-        plan_id: form.plan_id,
       },
       admin: {
         nombre: form.nombre.trim(),
@@ -136,7 +94,7 @@ export default function RegisterPage() {
           </span>
           <h1>Tu empresa entra<br />y prueba TURNSOFT.</h1>
           <p>
-            Crea la cuenta de tu empresa, elige un plan y comienza a ordenar
+            Crea la cuenta de tu empresa y comienza a ordenar
             clientes, trabajadores y horarios. Sin tarjeta para empezar.
           </p>
 
@@ -147,7 +105,7 @@ export default function RegisterPage() {
             </div>
             <div>
               <CheckCircle2 size={17} />
-              <span><strong>Pago simple:</strong> al confirmar el pago, la empresa queda activa.</span>
+              <span><strong>Sin compromiso:</strong> no se pide plan ni medio de pago para probar.</span>
             </div>
             <div>
               <CheckCircle2 size={17} />
@@ -160,7 +118,7 @@ export default function RegisterPage() {
               <span>1</span>
               <div>
                 <strong>Registra tu empresa</strong>
-                <small>Datos, administrador y plan.</small>
+                <small>Datos de la empresa y del administrador.</small>
               </div>
             </div>
             <div>
@@ -198,8 +156,8 @@ export default function RegisterPage() {
             </Link>
           </div>
           <p className="login-card-sub">
-            La prueba de 15 días comienza al registrarte. Al finalizar, tu
-            empresa queda activa cuando TURNSOFT verifica el pago.
+            La prueba de 15 días comienza al registrarte. Los planes se
+            anunciarán antes del lanzamiento comercial.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
@@ -363,82 +321,14 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><CreditCard size={16} /></span>
-              <div>
-                <strong>Plan para tu empresa</strong>
-                <small>La prueba es gratuita. El pago se verifica al finalizar.</small>
-              </div>
-            </div>
-
-            {loadingPlans ? (
-              <div className="register-plans-state">Cargando planes disponibles…</div>
-            ) : plansError ? (
-              <div className="form-error">{plansError}</div>
-            ) : planes.length ? (
-              <div className="register-plan-grid">
-                {planes.map((plan) => {
-                  const selected = plan.id === form.plan_id;
-                  return (
-                    <label key={plan.id} className={`register-plan ${selected ? 'is-selected' : ''}`}>
-                      <input
-                        type="radio"
-                        name="plan"
-                        value={plan.id}
-                        checked={selected}
-                        onChange={() => set('plan_id', plan.id)}
-                      />
-                      <div className="register-plan-head">
-                        <strong>{plan.nombre}</strong>
-                        {selected ? <span className="register-plan-check"><Check size={14} /></span> : null}
-                      </div>
-                      <div className="register-plan-price">
-                        <strong>{money(plan.precio_mensual)}</strong>
-                        <span>por mes</span>
-                      </div>
-                      {plan.descripcion ? <p>{plan.descripcion}</p> : null}
-                      <ul>
-                        <li><Building2 size={13} /> {limitLabel(plan.max_clientes, 'cliente', 'clientes')}</li>
-                        <li><UserRound size={13} /> {limitLabel(plan.max_usuarios, 'usuario', 'usuarios')}</li>
-                        <li><ShieldCheck size={13} /> {limitLabel(plan.max_guardias, 'trabajador', 'trabajadores')}</li>
-                      </ul>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="register-empty">
-                <Headphones size={20} />
-                <div>
-                  <strong>Aún no hay planes publicados</strong>
-                  <p>
-                    El supervisor de TURNSOFT todavía no habilitó el catálogo.
-                    Vuelve a intentarlo más tarde o escríbenos para coordinar tu alta.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
           <button
             type="submit"
             className="btn btn-primary btn-md login-submit"
-            disabled={busy || loadingPlans || !planes.length}
+            disabled={busy}
           >
             <span>{busy ? 'Creando tu empresa…' : 'Crear empresa y probar 15 días'}</span>
             <ArrowRight size={17} />
           </button>
-
-          {selectedPlan ? (
-            <div className="register-summary">
-              <Sparkles size={15} />
-              <span>
-                Prueba de 15 días en el plan <strong>{selectedPlan.nombre}</strong>.
-                Al finalizar, el acceso se activa con la verificación del pago.
-              </span>
-            </div>
-          ) : null}
 
           <p className="login-coldstart">
             Al crear la cuenta aceptas las condiciones de uso de TURNSOFT. Tus
