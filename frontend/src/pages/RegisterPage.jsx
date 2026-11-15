@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
+  Building2,
   CheckCircle2,
   KeyRound,
   LockKeyhole,
   Sparkles,
+  UserRound,
 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import { useAuth } from '../store/AuthContext.jsx';
