@@ -18,11 +18,8 @@ const EMPTY = {
   razon_social: '',
   rut_empresa: '',
   sector: 'seguridad',
-  email_contacto: '',
   telefono: '',
-  direccion: '',
   ciudad: '',
-  nombre: '',
   email: '',
   password: '',
   confirm: '',
@@ -53,11 +50,7 @@ export default function RegisterPage() {
 
     if (form.razon_social.trim().length < 2) return setError('Ingresa la razón social de la empresa.');
     if (!validRut(form.rut_empresa)) return setError('Ingresa un RUT válido, por ejemplo 76.123.456-7.');
-    if (form.email_contacto && !isValidEmail(form.email_contacto)) {
-      return setError('Ingresa un correo de contacto válido.');
-    }
-    if (!form.nombre.trim()) return setError('Ingresa tu nombre completo.');
-    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para tu acceso.');
+    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para el acceso de la empresa.');
     if (form.password.length < 8) return setError('La clave debe tener al menos 8 caracteres.');
     if (form.password !== form.confirm) return setError('Las claves no coinciden.');
 
@@ -66,13 +59,11 @@ export default function RegisterPage() {
         razon_social: form.razon_social.trim(),
         rut_empresa: form.rut_empresa.trim(),
         sector: form.sector,
-        email_contacto: form.email_contacto.trim(),
+        email_contacto: form.email.trim(),
         telefono: form.telefono.trim(),
-        direccion: form.direccion.trim(),
         ciudad: form.ciudad.trim(),
       },
       admin: {
-        nombre: form.nombre.trim(),
         email: form.email.trim(),
         password: form.password,
       },
@@ -117,8 +108,8 @@ export default function RegisterPage() {
             </Link>
           </div>
           <p className="login-card-sub">
-            Primero creas la empresa. Luego, dentro de TURNSOFT, tú asignas a
-            los administradores y validadores. Sin tarjeta ni plan para empezar.
+            Creas la empresa con su acceso. Luego, dentro de TURNSOFT, asignas a
+            los administradores y validadores. Sin tarjeta ni plan.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
@@ -128,7 +119,7 @@ export default function RegisterPage() {
               <span className="login-section-icon"><Building2 size={16} /></span>
               <div>
                 <strong>Datos de la empresa</strong>
-                <small>Así aparecerá tu operación en TURNSOFT.</small>
+                <small>Así aparecerá tu empresa en TURNSOFT.</small>
               </div>
             </div>
 
@@ -168,18 +159,6 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="field-label">Correo de contacto</span>
-                <input
-                  className="input"
-                  type="email"
-                  value={form.email_contacto}
-                  onChange={(event) => set('email_contacto', event.target.value)}
-                  placeholder="contacto@empresa.cl"
-                  autoComplete="email"
-                />
-              </label>
-
-              <label className="field">
                 <span className="field-label">Teléfono</span>
                 <input
                   className="input"
@@ -190,18 +169,7 @@ export default function RegisterPage() {
                 />
               </label>
 
-              <label className="field register-full">
-                <span className="field-label">Dirección</span>
-                <input
-                  className="input"
-                  value={form.direccion}
-                  onChange={(event) => set('direccion', event.target.value)}
-                  placeholder="Av. Providencia 1234, oficina 56"
-                  autoComplete="street-address"
-                />
-              </label>
-
-              <label className="field register-full">
+              <label className="field">
                 <span className="field-label">Ciudad</span>
                 <input
                   className="input"
@@ -218,23 +186,12 @@ export default function RegisterPage() {
             <div className="login-section-head">
               <span className="login-section-icon"><UserRound size={16} /></span>
               <div>
-                <strong>Tu acceso como titular</strong>
-                <small>Serás el titular de la empresa y desde adentro asignarás a los demás.</small>
+                <strong>Acceso de la empresa</strong>
+                <small>Con este correo y clave entra tu empresa a TURNSOFT.</small>
               </div>
             </div>
 
             <div className="register-grid">
-              <label className="field register-full">
-                <span className="field-label">Tu nombre completo</span>
-                <input
-                  className="input"
-                  value={form.nombre}
-                  onChange={(event) => set('nombre', event.target.value)}
-                  placeholder="Nombre y apellido"
-                  autoComplete="name"
-                />
-              </label>
-
               <label className="field register-full">
                 <span className="field-label">Correo de acceso</span>
                 <div className="login-input-wrap">
@@ -244,7 +201,7 @@ export default function RegisterPage() {
                     type="email"
                     value={form.email}
                     onChange={(event) => set('email', event.target.value)}
-                    placeholder="tu.correo@empresa.cl"
+                    placeholder="correo@empresa.cl"
                     autoComplete="username"
                   />
                 </div>

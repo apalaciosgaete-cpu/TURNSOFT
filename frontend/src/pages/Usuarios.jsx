@@ -28,9 +28,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const ROLES = {
   operador: {
-    label: 'Titular',
+    label: 'Acceso de la empresa',
     tone: 'info',
-    description: 'Creó la empresa. Tiene todos los permisos y no puede ser desactivado.',
+    description: 'Es el acceso con el que se creó la empresa. Tiene todos los permisos y no se puede desactivar.',
   },
   admin: {
     label: 'Administrador',
@@ -233,7 +233,7 @@ export default function Usuarios() {
           <div className="card-actions-row">
             <Badge tone="neutral">
               {activos}
-              {maxUsuarios !== null ? ` de ${maxUsuarios}` : ''} activos
+              {maxUsuarios !== null ? ` de ${maxUsuarios}` : ''} {activos === 1 && maxUsuarios === null ? 'activo' : 'activos'}
             </Badge>
             <Button size="sm" icon={Plus} onClick={abrirNuevo} disabled={limiteAlcanzado}>
               Agregar usuario
@@ -269,9 +269,9 @@ export default function Usuarios() {
               <tbody>
                 {usuarios.map((usuario, index) => {
                   const role = ROLES[usuario.rol] || ROLES.admin;
-                  const esTitular = usuario.rol === 'operador';
+                  const esEmpresa = usuario.rol === 'operador';
                   const esYo = String(usuario.id) === String(session?.id);
-                  const puedeEditar = !esTitular || esYo;
+                  const puedeEditar = !esEmpresa || esYo;
                   return (
                     <tr key={usuario.id} className={usuario.activo ? '' : 'row-muted'}>
                       <td>
@@ -307,7 +307,7 @@ export default function Usuarios() {
                               <Pencil size={16} />
                             </button>
                           ) : null}
-                          {!esTitular && !esYo ? (
+                          {!esEmpresa && !esYo ? (
                             <>
                               <button
                                 type="button"

@@ -38,7 +38,7 @@ async function findInternal(id, empresaId) {
  */
 function assertCanEdit(actor, target) {
   if (target.rol === 'operador' && actor.rol !== 'operador') {
-    throw httpError(403, 'Solo el titular puede modificar su propia cuenta.');
+    throw httpError(403, 'Solo el acceso de la empresa puede modificar su propia cuenta.');
   }
 }
 
@@ -116,7 +116,7 @@ router.patch('/:id', authenticateToken, requireUserManager, async (req, res) => 
       if (!next.nombre) throw httpError(400, 'Ingresa el nombre de la persona.');
     }
     if (body.rol !== undefined && body.rol !== target.rol) {
-      if (target.rol === 'operador') throw httpError(400, 'No se puede cambiar el rol del titular.');
+      if (target.rol === 'operador') throw httpError(400, 'No se puede cambiar el rol del acceso de la empresa.');
       if (!ROLES_ASIGNABLES.has(body.rol)) throw httpError(400, 'Elige el rol: administrador o validador.');
       next.rol = body.rol;
     }
@@ -124,7 +124,7 @@ router.patch('/:id', authenticateToken, requireUserManager, async (req, res) => 
       if (String(target.id) === String(req.user.id)) {
         throw httpError(400, 'No puedes desactivar tu propia cuenta.');
       }
-      if (target.rol === 'operador') throw httpError(400, 'La cuenta del titular no se puede desactivar.');
+      if (target.rol === 'operador') throw httpError(400, 'El acceso de la empresa no se puede desactivar.');
       next.activo = Boolean(body.activo);
     }
 

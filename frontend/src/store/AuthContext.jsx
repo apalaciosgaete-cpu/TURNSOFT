@@ -89,7 +89,7 @@ function mapDbClient(db) {
 }
 
 const ROLE_LABELS = {
-  operador: 'Titular',
+  operador: 'Acceso de la empresa',
   admin: 'Administrador',
   validador: 'Validador',
   cliente: 'Cliente',
@@ -99,7 +99,7 @@ const ROLE_LABELS = {
 function buildSession(user, dbClients, token, previous = null) {
   const isSuperadmin = user.rol === 'superadmin';
   // "Operador" en la interfaz = cuenta con alcance sobre toda la empresa
-  // (titular, administrador y validador). El validador solo consulta y aprueba.
+  // (acceso de la empresa, administrador y validador). El validador solo consulta y aprueba.
   const isOperator =
     !isSuperadmin &&
     (!user.cliente_id || ['operador', 'admin', 'validador'].includes(user.rol));

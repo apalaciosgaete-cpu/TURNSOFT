@@ -114,7 +114,8 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
   const ciudad = clean(empresaBody.ciudad, 100) || null;
   const planId = clean(empresaBody.plan_id, 36);
 
-  const adminNombre = clean(adminBody.nombre, 200);
+  // La cuenta de la empresa no pide nombre de persona: usa la razón social.
+  const adminNombre = clean(adminBody.nombre, 200) || razonSocial;
   const adminEmail = clean(adminBody.email, 200).toLowerCase();
   const adminPassword = String(adminBody.password || '');
 
@@ -130,11 +131,8 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
   if (emailContacto && !EMAIL_RE.test(emailContacto)) {
     return res.status(400).json({ error: 'Ingresa un correo de contacto válido.' });
   }
-  if (!adminNombre) {
-    return res.status(400).json({ error: 'Ingresa el nombre del administrador.' });
-  }
   if (!EMAIL_RE.test(adminEmail)) {
-    return res.status(400).json({ error: 'Ingresa un correo válido para el administrador.' });
+    return res.status(400).json({ error: 'Ingresa un correo válido para el acceso de la empresa.' });
   }
   if (adminPassword.length < 8) {
     return res.status(400).json({ error: 'La clave debe tener al menos 8 caracteres.' });

@@ -296,7 +296,9 @@ export function Layout() {
               <strong>{session?.name}</strong>
               <span>
                 {isOperator
-                  ? `${session?.rolLabel || 'Operador'} · ${session?.empresa || 'Mi empresa'}`
+                  ? session?.rol === 'operador'
+                    ? 'Acceso de la empresa'
+                    : `${session?.rolLabel || 'Operador'} · ${session?.empresa || 'Mi empresa'}`
                   : `Cliente · ${activeClient?.name || session?.clientName}`}
               </span>
             </div>

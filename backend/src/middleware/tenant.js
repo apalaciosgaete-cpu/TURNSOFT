@@ -104,7 +104,7 @@ function requireApprover(req, res, next) {
 
 function requireUserManager(req, res, next) {
   if (!canManageUsers(req.user)) {
-    return res.status(403).json({ error: 'Solo el titular o un administrador pueden gestionar usuarios.' });
+    return res.status(403).json({ error: 'Solo el acceso de la empresa o un administrador pueden gestionar usuarios.' });
   }
   next();
 }
