@@ -128,6 +128,7 @@ function buildSession(user, dbClients, token, previous = null) {
     readOnly: user.rol === 'validador',
     canManageUsers: user.rol === 'operador' || user.rol === 'admin',
     mustChangePassword: Boolean(user.debe_cambiar_clave),
+    dataTreatmentPending: Boolean(user.tratamiento_datos_pendiente),
     empresa: user.empresa_nombre || (isSuperadmin ? 'TURNSOFT' : 'Mi empresa'),
     empresaEstado: user.empresa_estado || null,
     pruebaFin: user.prueba_fin || null,
@@ -141,9 +142,9 @@ function buildSession(user, dbClients, token, previous = null) {
   };
 }
 
-/** Con clave temporal pendiente el servidor solo permite cambiarla. */
+/** Con la clave temporal o el tratamiento de datos pendientes, el servidor bloquea el resto. */
 function needsClients(user) {
-  return user.rol !== 'superadmin' && !user.debe_cambiar_clave;
+  return user.rol !== 'superadmin' && !user.debe_cambiar_clave && !user.tratamiento_datos_pendiente;
 }
 
 function loadSession() {
@@ -350,6 +351,30 @@ export function AuthProvider({ children }) {
     [session?.token]
   );
 
+  /** La empresa acepta el tratamiento de datos; al terminar se habilita la app. */
+  const acceptDataTreatment = useCallback(
+    async (payload) => {
+      if (!session?.token) {
+        throw new ApiError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
+      }
+      await apiRequest('/datos/tratamiento/aceptar', {
+        method: 'POST',
+        token: session.token,
+        body: payload,
+      });
+      const { user } = await apiRequest('/auth/me', { token: session.token });
+      const dbClients = needsClients(user)
+        ? await apiRequest('/clientes', { token: session.token })
+        : [];
+      setSession((previous) =>
+        previous && previous.token === session.token
+          ? buildSession(user, dbClients, previous.token, previous)
+          : previous
+      );
+    },
+    [session?.token]
+  );
+
   const logout = useCallback(() => {
     setAuthError('');
     setSession(null);
@@ -370,6 +395,7 @@ export function AuthProvider({ children }) {
   const readOnly = Boolean(session?.readOnly);
   const canManageUsers = Boolean(session?.canManageUsers);
   const mustChangePassword = Boolean(session?.mustChangePassword);
+  const dataTreatmentPending = Boolean(session?.dataTreatmentPending);
 
   const clients = useMemo(() => session?.clients || [], [session]);
 
@@ -392,6 +418,8 @@ export function AuthProvider({ children }) {
       readOnly,
       canManageUsers,
       mustChangePassword,
+      dataTreatmentPending,
+      acceptDataTreatment,
       changePassword,
       clients,
       activeClient,
@@ -415,6 +443,8 @@ export function AuthProvider({ children }) {
       readOnly,
       canManageUsers,
       mustChangePassword,
+      dataTreatmentPending,
+      acceptDataTreatment,
       changePassword,
       clients,
       activeClient,

@@ -120,8 +120,8 @@ export default function Landing() {
             <a href="#preguntas">Preguntas</a>
           </nav>
           <div className="lp-nav-cta">
-            <Link to="/ingresar" className="lp-btn lp-btn-ghost">Iniciar sesión</Link>
-            <Link to="/registro" className="lp-btn lp-btn-primary">Prueba 15 días</Link>
+            <Link to="/ingresar" className="lp-btn lp-btn-ghost">Ya tengo cuenta</Link>
+            <Link to="/registro" className="lp-btn lp-btn-primary">Crear cuenta</Link>
           </div>
         </div>
       </header>
@@ -140,7 +140,7 @@ export default function Landing() {
                 <Link to="/registro" className="lp-btn lp-btn-primary lp-btn-lg">
                   Prueba 15 días gratis <ArrowRight size={18} />
                 </Link>
-                <Link to="/ingresar" className="lp-btn lp-btn-light lp-btn-lg">Iniciar sesión</Link>
+                <Link to="/ingresar" className="lp-btn lp-btn-light lp-btn-lg">Ya tengo cuenta</Link>
               </div>
               <ul className="lp-hero-points">
                 <li><Lock size={15} /> Cada empresa ve solo sus datos</li>

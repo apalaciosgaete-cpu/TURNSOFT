@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   Building2,
   KeyRound,
@@ -92,20 +93,15 @@ export default function RegisterPage() {
 
         <div className="login-story-foot">
           <LockKeyhole size={15} />
-          <span>Datos aislados por empresa · Operación alojada en Chile</span>
+          <span>Datos aislados por empresa · Conexión cifrada</span>
         </div>
       </section>
 
       <section className="login-panel register-panel">
         <form className="login-card register-card" onSubmit={submit}>
-          <div className="register-card-head">
-            <div>
-              <span className="login-card-eyebrow">Registro de empresa</span>
-              <h2>Crea tu cuenta</h2>
-            </div>
-            <Link className="register-login-link" to="/ingresar">
-              Ya tengo cuenta <ArrowRight size={14} />
-            </Link>
+          <div>
+            <span className="login-card-eyebrow">Primera vez en TURNSOFT</span>
+            <h2>Crea tu cuenta</h2>
           </div>
           <p className="login-card-sub">
             Creas la empresa con su acceso. Luego, dentro de TURNSOFT, asignas a
@@ -254,10 +250,9 @@ export default function RegisterPage() {
           </p>
         </form>
 
-        <p className="login-help">
-          <LockKeyhole size={14} />
-          ¿Ya registraste tu empresa? <Link className="register-help-link" to="/ingresar">Inicia sesión</Link>
-        </p>
+        <Link className="back-home-link" to="/">
+          <ArrowLeft size={14} /> Volver al inicio
+        </Link>
       </section>
     </div>
   );

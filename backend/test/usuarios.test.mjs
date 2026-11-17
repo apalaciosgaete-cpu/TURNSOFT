@@ -81,3 +81,13 @@ test('la clave temporal es legible, única y verificable', () => {
   assert.equal(verifyPassword(clave, hashPassword(clave)), true);
   assert.equal(verifyPassword(`${clave}x`, hashPassword(clave)), false);
 });
+
+test('el tratamiento de datos se exige a las cuentas internas de una empresa', () => {
+  const { requiereTratamientoDatos } = require('../src/middleware/auth.js');
+  assert.equal(requiereTratamientoDatos(titular), true);
+  assert.equal(requiereTratamientoDatos(admin), true);
+  assert.equal(requiereTratamientoDatos(validador), true);
+  assert.equal(requiereTratamientoDatos(cliente), false);
+  assert.equal(requiereTratamientoDatos(maestro), false);
+  assert.equal(requiereTratamientoDatos({ rol: 'admin', empresa_id: null }), false);
+});

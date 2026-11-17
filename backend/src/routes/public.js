@@ -73,6 +73,9 @@ function publicUser(user) {
     empresa_estado: user.empresa_estado || null,
     prueba_fin: user.prueba_fin || null,
     plan_nombre: user.plan_nombre || null,
+    debe_cambiar_clave: false,
+    // Toda empresa nueva debe aceptar el tratamiento de datos en su primer ingreso.
+    tratamiento_datos_pendiente: true,
   };
 }
 

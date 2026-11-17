@@ -3,11 +3,13 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const {
-  authenticateAllowingPasswordChange,
+  authenticateAllowingPending,
+  requiereTratamientoDatos,
   clearUsuarioCache,
   empresaAccess,
   expireTrialIfNeeded,
 } = require('../middleware/auth');
+const { TRATAMIENTO_DATOS_VERSION } = require('../config/datos');
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { getJwtSecret, JWT_ALGORITHM } = require('../config/jwt');
 const { checkSetupToken } = require('../utils/setupToken');
@@ -46,6 +48,7 @@ function publicUser(user) {
     prueba_fin: user.prueba_fin || null,
     plan_nombre: user.plan_nombre || null,
     debe_cambiar_clave: Boolean(user.debe_cambiar_clave),
+    tratamiento_datos_pendiente: requiereTratamientoDatos(user) && !user.datos_aceptados,
   };
 }
 
@@ -182,14 +185,18 @@ router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (r
     const result = await pool.query(
       `SELECT u.*, c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
-              p.nombre AS plan_nombre
+              p.nombre AS plan_nombre,
+              EXISTS (
+                SELECT 1 FROM aceptaciones_datos a
+                WHERE a.empresa_id = u.empresa_id AND a.version = $2
+              ) AS datos_aceptados
        FROM usuarios u
        LEFT JOIN clientes c ON c.id = u.cliente_id
        LEFT JOIN empresas e ON e.id = u.empresa_id
        LEFT JOIN planes p ON p.id = e.plan_id
        WHERE lower(u.email) = lower($1) AND u.activo = true
        LIMIT 1`,
-      [email]
+      [email, TRATAMIENTO_DATOS_VERSION]
     );
 
     if (!result.rows.length) {
@@ -227,20 +234,24 @@ router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (r
   }
 });
 
-router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
+router.get('/me', authenticateAllowingPending, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT u.id, u.email, u.nombre, u.rol, u.empresa_id, u.cliente_id, u.debe_cambiar_clave,
               c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
-              p.nombre AS plan_nombre
+              p.nombre AS plan_nombre,
+              EXISTS (
+                SELECT 1 FROM aceptaciones_datos a
+                WHERE a.empresa_id = u.empresa_id AND a.version = $2
+              ) AS datos_aceptados
        FROM usuarios u
        LEFT JOIN clientes c ON c.id = u.cliente_id
        LEFT JOIN empresas e ON e.id = u.empresa_id
        LEFT JOIN planes p ON p.id = e.plan_id
        WHERE u.id = $1 AND u.activo = true
        LIMIT 1`,
-      [req.user.id]
+      [req.user.id, TRATAMIENTO_DATOS_VERSION]
     );
     if (!result.rows.length) {
       return res.status(401).json({ error: 'La cuenta ya no está disponible.' });
@@ -253,7 +264,7 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
 });
 
 // La persona cambia su propia clave (obligatorio tras recibir una temporal).
-router.post('/cambiar-clave', rateLimits.loginPorIp, authenticateAllowingPasswordChange, async (req, res) => {
+router.post('/cambiar-clave', rateLimits.loginPorIp, authenticateAllowingPending, async (req, res) => {
   try {
     const actual = String(req.body?.clave_actual || '');
     const nueva = String(req.body?.clave_nueva || '');

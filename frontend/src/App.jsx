@@ -3,6 +3,7 @@ import { Layout } from './components/Layout.jsx';
 import { MasterLayout } from './components/MasterLayout.jsx';
 import { LoginScreen } from './components/LoginScreen.jsx';
 import { ChangePasswordScreen } from './components/ChangePasswordScreen.jsx';
+import { DataTreatmentScreen } from './components/DataTreatmentScreen.jsx';
 import { useAuth } from './store/AuthContext.jsx';
 import { MasterProvider } from './store/MasterContext.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -38,7 +39,7 @@ function NotFound() {
 }
 
 export default function App() {
-  const { session, isSuperadmin, isOperator, canManageUsers, mustChangePassword } = useAuth();
+  const { session, isSuperadmin, isOperator, canManageUsers, mustChangePassword, dataTreatmentPending } = useAuth();
 
   if (!session) {
     return (
@@ -53,6 +54,10 @@ export default function App() {
 
   if (mustChangePassword) {
     return <ChangePasswordScreen />;
+  }
+
+  if (dataTreatmentPending) {
+    return <DataTreatmentScreen />;
   }
 
   if (isSuperadmin) {

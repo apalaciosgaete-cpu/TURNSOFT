@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Truck,
   UserRound,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../store/AuthContext.jsx';
 import { BrandMark } from './Brand.jsx';
@@ -307,13 +308,6 @@ export function LoginScreen() {
               <ArrowRight size={17} />
             </button>
 
-            <div className="login-register-cta">
-              <span>¿Tu empresa aún no está en TURNSOFT?</span>
-              <Link to="/registro">
-                Regístrate y prueba 15 días <ArrowRight size={14} />
-              </Link>
-            </div>
-
             <p className="login-coldstart">
               El servidor gratuito puede tardar hasta un minuto en despertar tras
               un período sin uso.
@@ -325,6 +319,9 @@ export function LoginScreen() {
           <LockKeyhole size={14} />
           ¿Problemas para entrar? Contacta al administrador de tu empresa.
         </p>
+        <Link className="back-home-link" to="/">
+          <ArrowLeft size={14} /> Volver al inicio
+        </Link>
       </section>
     </div>
   );
