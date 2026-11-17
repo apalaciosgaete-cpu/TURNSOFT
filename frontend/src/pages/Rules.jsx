@@ -23,6 +23,7 @@ export default function Rules() {
     generate,
     busyScenarioId,
     isStale,
+    readOnly,
   } = useTurnsoft();
 
   if (!scenario) return null;
@@ -51,6 +52,7 @@ export default function Rules() {
 
   return (
     <div className="page rules-page">
+      <fieldset className="readonly-fieldset" disabled={readOnly}>
       <div className="rules-layout">
         <div className="rules-main">
           <Card title="Régimen de jornada" subtitle="Un régimen excepcional solo habilita turnos sobre 10 h si existe autorización vigente.">
@@ -256,6 +258,7 @@ export default function Rules() {
           </Card>
         </aside>
       </div>
+      </fieldset>
     </div>
   );
 }

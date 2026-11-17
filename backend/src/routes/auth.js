@@ -3,10 +3,13 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 const {
-  authenticateToken,
+  authenticateAllowingPending,
+  requiereTratamientoDatos,
+  clearUsuarioCache,
   empresaAccess,
   expireTrialIfNeeded,
 } = require('../middleware/auth');
+const { TRATAMIENTO_DATOS_VERSION } = require('../config/datos');
 const { hashPassword, verifyPassword } = require('../utils/password');
 const { getJwtSecret, JWT_ALGORITHM } = require('../config/jwt');
 const { checkSetupToken } = require('../utils/setupToken');
@@ -44,6 +47,8 @@ function publicUser(user) {
     empresa_estado: user.empresa_estado || null,
     prueba_fin: user.prueba_fin || null,
     plan_nombre: user.plan_nombre || null,
+    debe_cambiar_clave: Boolean(user.debe_cambiar_clave),
+    tratamiento_datos_pendiente: requiereTratamientoDatos(user) && !user.datos_aceptados,
   };
 }
 
@@ -180,14 +185,18 @@ router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (r
     const result = await pool.query(
       `SELECT u.*, c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
-              p.nombre AS plan_nombre
+              p.nombre AS plan_nombre,
+              EXISTS (
+                SELECT 1 FROM aceptaciones_datos a
+                WHERE a.empresa_id = u.empresa_id AND a.version = $2
+              ) AS datos_aceptados
        FROM usuarios u
        LEFT JOIN clientes c ON c.id = u.cliente_id
        LEFT JOIN empresas e ON e.id = u.empresa_id
        LEFT JOIN planes p ON p.id = e.plan_id
        WHERE lower(u.email) = lower($1) AND u.activo = true
        LIMIT 1`,
-      [email]
+      [email, TRATAMIENTO_DATOS_VERSION]
     );
 
     if (!result.rows.length) {
@@ -225,20 +234,24 @@ router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (r
   }
 });
 
-router.get('/me', authenticateToken, async (req, res) => {
+router.get('/me', authenticateAllowingPending, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.id, u.email, u.nombre, u.rol, u.empresa_id, u.cliente_id,
+      `SELECT u.id, u.email, u.nombre, u.rol, u.empresa_id, u.cliente_id, u.debe_cambiar_clave,
               c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
-              p.nombre AS plan_nombre
+              p.nombre AS plan_nombre,
+              EXISTS (
+                SELECT 1 FROM aceptaciones_datos a
+                WHERE a.empresa_id = u.empresa_id AND a.version = $2
+              ) AS datos_aceptados
        FROM usuarios u
        LEFT JOIN clientes c ON c.id = u.cliente_id
        LEFT JOIN empresas e ON e.id = u.empresa_id
        LEFT JOIN planes p ON p.id = e.plan_id
        WHERE u.id = $1 AND u.activo = true
        LIMIT 1`,
-      [req.user.id]
+      [req.user.id, TRATAMIENTO_DATOS_VERSION]
     );
     if (!result.rows.length) {
       return res.status(401).json({ error: 'La cuenta ya no está disponible.' });
@@ -247,6 +260,36 @@ router.get('/me', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('[auth/me]', error);
     return res.status(503).json({ error: 'No se pudo verificar la sesión.' });
+  }
+});
+
+// La persona cambia su propia clave (obligatorio tras recibir una temporal).
+router.post('/cambiar-clave', rateLimits.loginPorIp, authenticateAllowingPending, async (req, res) => {
+  try {
+    const actual = String(req.body?.clave_actual || '');
+    const nueva = String(req.body?.clave_nueva || '');
+    if (nueva.length < 8) {
+      return res.status(400).json({ error: 'La clave nueva debe tener al menos 8 caracteres.' });
+    }
+    if (nueva === actual) {
+      return res.status(400).json({ error: 'La clave nueva debe ser distinta de la actual.' });
+    }
+
+    const found = await pool.query('SELECT password_hash FROM usuarios WHERE id = $1', [req.user.id]);
+    if (!found.rows.length || !verifyPassword(actual, found.rows[0].password_hash)) {
+      return res.status(400).json({ error: 'La clave actual no es correcta.' });
+    }
+
+    await pool.query(
+      `UPDATE usuarios SET password_hash = $1, debe_cambiar_clave = false, actualizado_en = NOW()
+       WHERE id = $2`,
+      [hashPassword(nueva), req.user.id]
+    );
+    clearUsuarioCache(req.user.id);
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error('[auth/cambiar-clave]', error);
+    return res.status(500).json({ error: 'No se pudo cambiar la clave.' });
   }
 });
 

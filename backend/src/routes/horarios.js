@@ -6,6 +6,8 @@ const {
   scopedClienteId,
   scopedEmpresaId,
   httpError,
+  denyValidador,
+  requireApprover,
 } = require('../middleware/tenant');
 const scheduler = require('../services/scheduler');
 
@@ -229,7 +231,7 @@ async function persistScenario({
  * En ambos casos el token manda: una cuenta de cliente solo puede generar y
  * persistir datos de su propio cliente.
  */
-router.post('/generar', authenticateToken, async (req, res) => {
+router.post('/generar', authenticateToken, denyValidador, async (req, res) => {
   try {
     const body = req.body || {};
     const scenarioInput = body.scenario && typeof body.scenario === 'object' ? body.scenario : null;
@@ -389,7 +391,7 @@ router.get('/escenarios/:id', authenticateToken, async (req, res) => {
 });
 
 // Publicar un escenario guardado y sus asignaciones.
-router.post('/escenarios/:id/publicar', authenticateToken, async (req, res) => {
+router.post('/escenarios/:id/publicar', authenticateToken, requireApprover, async (req, res) => {
   try {
     const empresaId = scopedEmpresaId(req.user, req.body?.empresa_id || req.query.empresa_id);
     const clienteId = scopedClienteId(req.user, req.body?.cliente_id || req.query.cliente_id);
@@ -416,7 +418,7 @@ router.post('/escenarios/:id/publicar', authenticateToken, async (req, res) => {
 });
 
 // Publicar horarios por ID (compatibilidad con el flujo anterior).
-router.post('/publicar', authenticateToken, async (req, res) => {
+router.post('/publicar', authenticateToken, requireApprover, async (req, res) => {
   try {
     const { horario_ids } = req.body;
     const empresaId = scopedEmpresaId(req.user, req.body?.empresa_id);

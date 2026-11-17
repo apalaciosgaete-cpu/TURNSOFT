@@ -21,7 +21,7 @@ import { ScenarioModal } from '../components/ScenarioModal.jsx';
 import { Badge, Button, Card, SectorIcon, Stat } from '../components/ui.jsx';
 
 export default function Clients() {
-  const { isOperator, activeClientId, selectClient, session } = useAuth();
+  const { isOperator, readOnly, activeClientId, selectClient, session } = useAuth();
   const { clientSummaries, notify } = useTurnsoft();
   const navigate = useNavigate();
   const [modalClientId, setModalClientId] = useState(null);
@@ -77,7 +77,7 @@ export default function Clients() {
               <span>{isOperator ? 'Cuenta operadora' : 'Cuenta cliente'}</span>
             </div>
           </div>
-          {isOperator ? (
+          {isOperator && !readOnly ? (
             <Button icon={Plus} onClick={() => setClientOpen(true)}>
               Nuevo cliente
             </Button>
@@ -119,7 +119,7 @@ export default function Clients() {
               Cada cliente tiene su propia cuenta, dotación y escenarios. Podrás
               agregar más cuando quieras.
             </p>
-            {isOperator ? (
+            {isOperator && !readOnly ? (
               <div className="empty-action">
                 <Button icon={Plus} onClick={() => setClientOpen(true)}>Nuevo cliente</Button>
               </div>
@@ -194,7 +194,7 @@ export default function Clients() {
                 <Button variant="primary" size="sm" icon={ArrowRight} onClick={() => openOperation(client.id)}>
                   Ver operación
                 </Button>
-                <Button variant="ghost" size="sm" icon={Plus} onClick={() => createScenario(client.id)}>
+                <Button variant="ghost" size="sm" icon={Plus} onClick={() => createScenario(client.id)} hidden={readOnly}>
                   Nuevo escenario
                 </Button>
               </div>

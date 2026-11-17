@@ -6,11 +6,35 @@ function httpError(status, message) {
   return error;
 }
 
-/** Un usuario sin cliente asignado es operador (incluye tokens legacy). */
+/**
+ * Roles internos de la empresa:
+ * - operador: titular, creado al registrar la empresa.
+ * - admin: administrador, gestiona usuarios, datos y horarios.
+ * - validador: ve toda la operación y aprueba horarios y solicitudes.
+ * Un usuario sin cliente asignado y sin rol conocido se trata como operador
+ * (tokens legacy).
+ */
+const ROLES_INTERNOS = ['operador', 'admin', 'validador'];
+
+/** Cuenta que puede modificar datos de la empresa (titular o administrador). */
 function isOperator(user) {
   if (!user) return false;
-  if (user.rol === 'superadmin') return false;
+  if (user.rol === 'superadmin' || user.rol === 'validador') return false;
   return !user.cliente_id || user.rol === 'operador' || user.rol === 'admin';
+}
+
+function isValidador(user) {
+  return Boolean(user && user.rol === 'validador');
+}
+
+/** Gestiona usuarios internos: titular y administrador. */
+function canManageUsers(user) {
+  return Boolean(user && (user.rol === 'operador' || user.rol === 'admin'));
+}
+
+/** Aprueba horarios y solicitudes: titular, administrador y validador. */
+function canApprove(user) {
+  return canManageUsers(user) || isValidador(user);
 }
 
 function isSuperadmin(user) {
@@ -63,6 +87,28 @@ function requireOperator(req, res, next) {
   next();
 }
 
+/** El validador consulta y aprueba, pero no modifica datos. */
+function denyValidador(req, res, next) {
+  if (isValidador(req.user)) {
+    return res.status(403).json({ error: 'Tu cuenta de validador solo puede consultar y aprobar.' });
+  }
+  next();
+}
+
+function requireApprover(req, res, next) {
+  if (!canApprove(req.user)) {
+    return res.status(403).json({ error: 'Esta acción requiere una cuenta que pueda aprobar.' });
+  }
+  next();
+}
+
+function requireUserManager(req, res, next) {
+  if (!canManageUsers(req.user)) {
+    return res.status(403).json({ error: 'Solo el acceso de la empresa o un administrador pueden gestionar usuarios.' });
+  }
+  next();
+}
+
 function requireSuperadmin(req, res, next) {
   if (!isSuperadmin(req.user)) {
     return res.status(403).json({ error: 'Esta acción requiere la cuenta de supervisor maestro.' });
@@ -71,7 +117,14 @@ function requireSuperadmin(req, res, next) {
 }
 
 module.exports = {
+  ROLES_INTERNOS,
   isOperator,
+  isValidador,
+  canManageUsers,
+  canApprove,
+  denyValidador,
+  requireApprover,
+  requireUserManager,
   isSuperadmin,
   scopedClienteId,
   scopedEmpresaId,

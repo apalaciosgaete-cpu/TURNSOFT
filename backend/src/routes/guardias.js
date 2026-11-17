@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
-const { scopedClienteId, scopedEmpresaId } = require('../middleware/tenant');
+const { scopedClienteId, scopedEmpresaId, denyValidador } = require('../middleware/tenant');
 
 async function findGuard(id, user, { empresaId = null, clienteId = null } = {}) {
   const scopedEmpresa = scopedEmpresaId(user, empresaId);
@@ -47,7 +47,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Crear guardia. Un usuario cliente solo puede crear guardias de su cliente.
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, denyValidador, async (req, res) => {
   try {
     const empresaId = scopedEmpresaId(req.user, req.body.empresa_id);
     const clienteId = scopedClienteId(req.user, req.body.cliente_id);
@@ -113,7 +113,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Registrar certificación OS-10.
-router.post('/:id/certificacion-os10', authenticateToken, async (req, res) => {
+router.post('/:id/certificacion-os10', authenticateToken, denyValidador, async (req, res) => {
   try {
     const guard = await findGuard(req.params.id, req.user, {
       empresaId: req.body.empresa_id,
@@ -141,7 +141,7 @@ router.post('/:id/certificacion-os10', authenticateToken, async (req, res) => {
 });
 
 // Eliminar un trabajador de la base de la empresa.
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, denyValidador, async (req, res) => {
   try {
     const guard = await findGuard(req.params.id, req.user);
     if (!guard) {
@@ -156,7 +156,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 // Actualizar guardia.
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, denyValidador, async (req, res) => {
   try {
     const guard = await findGuard(req.params.id, req.user, {
       empresaId: req.body.empresa_id,

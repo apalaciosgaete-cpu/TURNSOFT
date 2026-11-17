@@ -2,6 +2,8 @@ import { Link, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout.jsx';
 import { MasterLayout } from './components/MasterLayout.jsx';
 import { LoginScreen } from './components/LoginScreen.jsx';
+import { ChangePasswordScreen } from './components/ChangePasswordScreen.jsx';
+import { DataTreatmentScreen } from './components/DataTreatmentScreen.jsx';
 import { useAuth } from './store/AuthContext.jsx';
 import { MasterProvider } from './store/MasterContext.jsx';
 import Dashboard from './pages/Dashboard.jsx';
@@ -14,7 +16,9 @@ import Reports from './pages/Reports.jsx';
 import Clients from './pages/Clients.jsx';
 import Support from './pages/Support.jsx';
 import MiEmpresa from './pages/MiEmpresa.jsx';
+import Usuarios from './pages/Usuarios.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
+import Landing from './pages/Landing.jsx';
 import MasterOverview from './pages/MasterOverview.jsx';
 import MasterCompanies from './pages/MasterCompanies.jsx';
 import MasterPayments from './pages/MasterPayments.jsx';
@@ -35,15 +39,25 @@ function NotFound() {
 }
 
 export default function App() {
-  const { session, isSuperadmin, isOperator } = useAuth();
+  const { session, isSuperadmin, isOperator, canManageUsers, mustChangePassword, dataTreatmentPending } = useAuth();
 
   if (!session) {
     return (
       <Routes>
+        <Route path="/" element={<Landing />} />
         <Route path="/registro" element={<RegisterPage />} />
+        <Route path="/ingresar" element={<LoginScreen />} />
         <Route path="*" element={<LoginScreen />} />
       </Routes>
     );
+  }
+
+  if (mustChangePassword) {
+    return <ChangePasswordScreen />;
+  }
+
+  if (dataTreatmentPending) {
+    return <DataTreatmentScreen />;
   }
 
   if (isSuperadmin) {
@@ -76,6 +90,7 @@ export default function App() {
         <Route path="clientes" element={<Clients />} />
         <Route path="registro" element={<Navigate to="/" replace />} />
         {isOperator ? <Route path="empresa" element={<MiEmpresa />} /> : null}
+        {canManageUsers ? <Route path="usuarios" element={<Usuarios />} /> : null}
         <Route path="soporte" element={<Support />} />
         <Route path="*" element={<NotFound />} />
       </Route>

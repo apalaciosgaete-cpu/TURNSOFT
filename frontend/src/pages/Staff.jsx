@@ -39,7 +39,7 @@ function emptyEmployee(scenario) {
 }
 
 export default function Staff() {
-  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee, notify } = useTurnsoft();
+  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee, notify, readOnly } = useTurnsoft();
   const { token } = useAuth();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState(null);
@@ -269,16 +269,20 @@ export default function Staff() {
               <Search size={15} />
               <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar persona o rol…" />
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={Download}
-              onClick={importarBase}
-              disabled={importing}
-            >
-              {importing ? 'Importando…' : 'Importar base'}
-            </Button>
-            <Button size="sm" icon={Plus} onClick={openNew}>Agregar persona</Button>
+            {readOnly ? null : (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={Download}
+                  onClick={importarBase}
+                  disabled={importing}
+                >
+                  {importing ? 'Importando…' : 'Importar base'}
+                </Button>
+                <Button size="sm" icon={Plus} onClick={openNew}>Agregar persona</Button>
+              </>
+            )}
           </div>
         }
       >
@@ -287,7 +291,7 @@ export default function Staff() {
             icon={Users}
             title={employees.length ? 'Sin resultados' : 'El equipo está vacío'}
             description={employees.length ? 'Prueba con otro nombre o rol.' : 'Agrega trabajadores para que el motor pueda cubrir los turnos.'}
-            action={!employees.length ? <Button icon={Plus} onClick={openNew}>Agregar persona</Button> : null}
+            action={!employees.length && !readOnly ? <Button icon={Plus} onClick={openNew}>Agregar persona</Button> : null}
           />
         ) : (
           <div className="table-wrap">
@@ -357,7 +361,7 @@ export default function Staff() {
                         </Badge>
                       </td>
                       <td>
-                        <div className="row-actions">
+                        <div className="row-actions" hidden={readOnly}>
                           <button type="button" className="icon-btn" title="Editar" onClick={() => openEdit(employee)}>
                             <Pencil size={16} />
                           </button>

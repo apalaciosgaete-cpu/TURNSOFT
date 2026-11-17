@@ -1,34 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowRight,
-  Building2,
-  Check,
-  CheckCircle2,
-  CreditCard,
-  Headphones,
   KeyRound,
   LockKeyhole,
-  ShieldCheck,
   Sparkles,
   UserRound,
 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
-import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { money } from '../lib/format.js';
+import { useAuth } from '../store/AuthContext.jsx';
 import { BrandMark } from '../components/Brand.jsx';
+import { ShiftPreview } from '../components/ShiftPreview.jsx';
 
 const SECTORES = Object.values(SECTOR_META);
 const EMPTY = {
   razon_social: '',
   rut_empresa: '',
   sector: 'seguridad',
-  email_contacto: '',
   telefono: '',
-  direccion: '',
   ciudad: '',
-  plan_id: '',
-  nombre: '',
   email: '',
   password: '',
   confirm: '',
@@ -43,42 +34,10 @@ function validRut(value) {
   return /^\d{6,8}-[0-9kK]$/.test(normalized);
 }
 
-function limitLabel(value, singular, plural) {
-  if (value === null || value === undefined) return `Sin límite de ${plural}`;
-  if (Number(value) === 1) return `1 ${singular}`;
-  return `${value} ${plural}`;
-}
-
 export default function RegisterPage() {
   const { register, authError, clearAuthError, busy } = useAuth();
   const [form, setForm] = useState(EMPTY);
   const [error, setError] = useState('');
-  const [planes, setPlanes] = useState([]);
-  const [loadingPlans, setLoadingPlans] = useState(true);
-  const [plansError, setPlansError] = useState('');
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const data = await apiRequest('/public/planes');
-        if (!cancelled) setPlanes(Array.isArray(data) ? data : []);
-      } catch (requestError) {
-        if (!cancelled) setPlansError(requestError.message);
-      } finally {
-        if (!cancelled) setLoadingPlans(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const selectedPlan = useMemo(
-    () => planes.find((plan) => plan.id === form.plan_id) || null,
-    [planes, form.plan_id]
-  );
-
   const set = (key, value) => {
     clearAuthError();
     setError('');
@@ -91,28 +50,20 @@ export default function RegisterPage() {
 
     if (form.razon_social.trim().length < 2) return setError('Ingresa la razón social de la empresa.');
     if (!validRut(form.rut_empresa)) return setError('Ingresa un RUT válido, por ejemplo 76.123.456-7.');
-    if (form.email_contacto && !isValidEmail(form.email_contacto)) {
-      return setError('Ingresa un correo de contacto válido.');
-    }
-    if (!form.nombre.trim()) return setError('Ingresa el nombre del administrador.');
-    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para el administrador.');
+    if (!isValidEmail(form.email)) return setError('Ingresa un correo válido para el acceso de la empresa.');
     if (form.password.length < 8) return setError('La clave debe tener al menos 8 caracteres.');
     if (form.password !== form.confirm) return setError('Las claves no coinciden.');
-    if (!form.plan_id) return setError('Selecciona un plan para comenzar.');
 
     await register({
       empresa: {
         razon_social: form.razon_social.trim(),
         rut_empresa: form.rut_empresa.trim(),
         sector: form.sector,
-        email_contacto: form.email_contacto.trim(),
+        email_contacto: form.email.trim(),
         telefono: form.telefono.trim(),
-        direccion: form.direccion.trim(),
         ciudad: form.ciudad.trim(),
-        plan_id: form.plan_id,
       },
       admin: {
-        nombre: form.nombre.trim(),
         email: form.email.trim(),
         password: form.password,
       },
@@ -134,85 +85,31 @@ export default function RegisterPage() {
           <span className="login-eyebrow">
             <Sparkles size={15} /> 15 días de prueba
           </span>
-          <h1>Tu empresa entra<br />y prueba TURNSOFT.</h1>
-          <p>
-            Crea la cuenta de tu empresa, elige un plan y comienza a ordenar
-            clientes, trabajadores y horarios. Sin tarjeta para empezar.
-          </p>
-
-          <div className="login-benefits">
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Prueba completa:</strong> 15 días con acceso a toda la operación.</span>
-            </div>
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Pago simple:</strong> al confirmar el pago, la empresa queda activa.</span>
-            </div>
-            <div>
-              <CheckCircle2 size={17} />
-              <span><strong>Aislamiento:</strong> tu empresa solo ve su propia operación.</span>
-            </div>
-          </div>
-
-          <div className="register-story-steps">
-            <div>
-              <span>1</span>
-              <div>
-                <strong>Registra tu empresa</strong>
-                <small>Datos, administrador y plan.</small>
-              </div>
-            </div>
-            <div>
-              <span>2</span>
-              <div>
-                <strong>Ordena tu base</strong>
-                <small>Trabajadores y horarios de entrada/salida.</small>
-              </div>
-            </div>
-            <div>
-              <span>3</span>
-              <div>
-                <strong>Genera horarios</strong>
-                <small>Clientes, escenarios y cumplimiento legal.</small>
-              </div>
-            </div>
-          </div>
+          <h1>Tus turnos, listos<br />en minutos.</h1>
+          <p>El motor propone el horario y valida la normativa chilena. Tú decides.</p>
+          <ShiftPreview />
         </div>
 
         <div className="login-story-foot">
           <LockKeyhole size={15} />
-          <span>Datos aislados por empresa · Operación alojada en Chile</span>
+          <span>Datos aislados por empresa · Conexión cifrada</span>
         </div>
       </section>
 
       <section className="login-panel register-panel">
         <form className="login-card register-card" onSubmit={submit}>
-          <div className="register-card-head">
-            <div>
-              <span className="login-card-eyebrow">Registro de empresa</span>
-              <h2>Crea tu cuenta</h2>
-            </div>
-            <Link className="register-login-link" to="/">
-              Ya tengo cuenta <ArrowRight size={14} />
-            </Link>
+          <div>
+            <span className="login-card-eyebrow">Primera vez en TURNSOFT</span>
+            <h2>Crea tu cuenta</h2>
           </div>
           <p className="login-card-sub">
-            La prueba de 15 días comienza al registrarte. Al finalizar, tu
-            empresa queda activa cuando TURNSOFT verifica el pago.
+            Un solo paso: los datos de tu empresa y el correo y la clave con que
+            ingresarás después. Sin tarjeta ni plan.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
 
           <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><Building2 size={16} /></span>
-              <div>
-                <strong>Datos de la empresa</strong>
-                <small>Así aparecerá tu operación en TURNSOFT.</small>
-              </div>
-            </div>
-
             <div className="register-grid">
               <label className="field register-full">
                 <span className="field-label">Razón social</span>
@@ -249,18 +146,6 @@ export default function RegisterPage() {
               </label>
 
               <label className="field">
-                <span className="field-label">Correo de contacto</span>
-                <input
-                  className="input"
-                  type="email"
-                  value={form.email_contacto}
-                  onChange={(event) => set('email_contacto', event.target.value)}
-                  placeholder="contacto@empresa.cl"
-                  autoComplete="email"
-                />
-              </label>
-
-              <label className="field">
                 <span className="field-label">Teléfono</span>
                 <input
                   className="input"
@@ -271,18 +156,7 @@ export default function RegisterPage() {
                 />
               </label>
 
-              <label className="field register-full">
-                <span className="field-label">Dirección</span>
-                <input
-                  className="input"
-                  value={form.direccion}
-                  onChange={(event) => set('direccion', event.target.value)}
-                  placeholder="Av. Providencia 1234, oficina 56"
-                  autoComplete="street-address"
-                />
-              </label>
-
-              <label className="field register-full">
+              <label className="field">
                 <span className="field-label">Ciudad</span>
                 <input
                   className="input"
@@ -292,32 +166,8 @@ export default function RegisterPage() {
                   autoComplete="address-level2"
                 />
               </label>
-            </div>
-          </div>
-
-          <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><UserRound size={16} /></span>
-              <div>
-                <strong>Cuenta administradora</strong>
-                <small>Con este acceso entrarás a la operación de tu empresa.</small>
-              </div>
-            </div>
-
-            <div className="register-grid">
               <label className="field register-full">
-                <span className="field-label">Nombre completo</span>
-                <input
-                  className="input"
-                  value={form.nombre}
-                  onChange={(event) => set('nombre', event.target.value)}
-                  placeholder="Nombre y apellido"
-                  autoComplete="name"
-                />
-              </label>
-
-              <label className="field register-full">
-                <span className="field-label">Correo de acceso</span>
+                <span className="field-label">Correo</span>
                 <div className="login-input-wrap">
                   <UserRound size={16} />
                   <input
@@ -325,7 +175,7 @@ export default function RegisterPage() {
                     type="email"
                     value={form.email}
                     onChange={(event) => set('email', event.target.value)}
-                    placeholder="admin@empresa.cl"
+                    placeholder="correo@empresa.cl"
                     autoComplete="username"
                   />
                 </div>
@@ -363,82 +213,14 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><CreditCard size={16} /></span>
-              <div>
-                <strong>Plan para tu empresa</strong>
-                <small>La prueba es gratuita. El pago se verifica al finalizar.</small>
-              </div>
-            </div>
-
-            {loadingPlans ? (
-              <div className="register-plans-state">Cargando planes disponibles…</div>
-            ) : plansError ? (
-              <div className="form-error">{plansError}</div>
-            ) : planes.length ? (
-              <div className="register-plan-grid">
-                {planes.map((plan) => {
-                  const selected = plan.id === form.plan_id;
-                  return (
-                    <label key={plan.id} className={`register-plan ${selected ? 'is-selected' : ''}`}>
-                      <input
-                        type="radio"
-                        name="plan"
-                        value={plan.id}
-                        checked={selected}
-                        onChange={() => set('plan_id', plan.id)}
-                      />
-                      <div className="register-plan-head">
-                        <strong>{plan.nombre}</strong>
-                        {selected ? <span className="register-plan-check"><Check size={14} /></span> : null}
-                      </div>
-                      <div className="register-plan-price">
-                        <strong>{money(plan.precio_mensual)}</strong>
-                        <span>por mes</span>
-                      </div>
-                      {plan.descripcion ? <p>{plan.descripcion}</p> : null}
-                      <ul>
-                        <li><Building2 size={13} /> {limitLabel(plan.max_clientes, 'cliente', 'clientes')}</li>
-                        <li><UserRound size={13} /> {limitLabel(plan.max_usuarios, 'usuario', 'usuarios')}</li>
-                        <li><ShieldCheck size={13} /> {limitLabel(plan.max_guardias, 'trabajador', 'trabajadores')}</li>
-                      </ul>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="register-empty">
-                <Headphones size={20} />
-                <div>
-                  <strong>Aún no hay planes publicados</strong>
-                  <p>
-                    El supervisor de TURNSOFT todavía no habilitó el catálogo.
-                    Vuelve a intentarlo más tarde o escríbenos para coordinar tu alta.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
           <button
             type="submit"
             className="btn btn-primary btn-md login-submit"
-            disabled={busy || loadingPlans || !planes.length}
+            disabled={busy}
           >
             <span>{busy ? 'Creando tu empresa…' : 'Crear empresa y probar 15 días'}</span>
             <ArrowRight size={17} />
           </button>
-
-          {selectedPlan ? (
-            <div className="register-summary">
-              <Sparkles size={15} />
-              <span>
-                Prueba de 15 días en el plan <strong>{selectedPlan.nombre}</strong>.
-                Al finalizar, el acceso se activa con la verificación del pago.
-              </span>
-            </div>
-          ) : null}
 
           <p className="login-coldstart">
             Al crear la cuenta aceptas las condiciones de uso de TURNSOFT. Tus
@@ -446,10 +228,9 @@ export default function RegisterPage() {
           </p>
         </form>
 
-        <p className="login-help">
-          <LockKeyhole size={14} />
-          ¿Ya registraste tu empresa? <Link className="register-help-link" to="/">Inicia sesión</Link>
-        </p>
+        <Link className="back-home-link" to="/">
+          <ArrowLeft size={14} /> Volver al inicio
+        </Link>
       </section>
     </div>
   );

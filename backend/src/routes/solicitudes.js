@@ -7,6 +7,7 @@ const {
   scopedEmpresaId,
   assertClienteAccess,
   httpError,
+  requireApprover,
 } = require('../middleware/tenant');
 
 // Listar solicitudes visibles para la cuenta.
@@ -76,7 +77,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Actualizar estado de solicitud.
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, requireApprover, async (req, res) => {
   try {
     const { estado } = req.body;
     const empresaId = scopedEmpresaId(req.user, req.body.empresa_id);

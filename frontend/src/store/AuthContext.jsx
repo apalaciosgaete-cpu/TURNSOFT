@@ -88,10 +88,21 @@ function mapDbClient(db) {
   };
 }
 
+const ROLE_LABELS = {
+  operador: 'Acceso de la empresa',
+  admin: 'Administrador',
+  validador: 'Validador',
+  cliente: 'Cliente',
+  superadmin: 'Supervisor maestro',
+};
+
 function buildSession(user, dbClients, token, previous = null) {
   const isSuperadmin = user.rol === 'superadmin';
+  // "Operador" en la interfaz = cuenta con alcance sobre toda la empresa
+  // (acceso de la empresa, administrador y validador). El validador solo consulta y aprueba.
   const isOperator =
-    !isSuperadmin && (!user.cliente_id || user.rol === 'operador' || user.rol === 'admin');
+    !isSuperadmin &&
+    (!user.cliente_id || ['operador', 'admin', 'validador'].includes(user.rol));
   const mapped = (dbClients || []).map(mapDbClient);
   const clients = isSuperadmin
     ? []
@@ -112,6 +123,12 @@ function buildSession(user, dbClients, token, previous = null) {
     email: user.email,
     name: user.nombre || user.email,
     role: isSuperadmin ? 'superadmin' : isOperator ? 'operador' : 'cliente',
+    rol: user.rol,
+    rolLabel: ROLE_LABELS[user.rol] || 'Usuario',
+    readOnly: user.rol === 'validador',
+    canManageUsers: user.rol === 'operador' || user.rol === 'admin',
+    mustChangePassword: Boolean(user.debe_cambiar_clave),
+    dataTreatmentPending: Boolean(user.tratamiento_datos_pendiente),
     empresa: user.empresa_nombre || (isSuperadmin ? 'TURNSOFT' : 'Mi empresa'),
     empresaEstado: user.empresa_estado || null,
     pruebaFin: user.prueba_fin || null,
@@ -123,6 +140,11 @@ function buildSession(user, dbClients, token, previous = null) {
     token,
     initials: initials(user.nombre || user.email),
   };
+}
+
+/** Con la clave temporal o el tratamiento de datos pendientes, el servidor bloquea el resto. */
+function needsClients(user) {
+  return user.rol !== 'superadmin' && !user.debe_cambiar_clave && !user.tratamiento_datos_pendiente;
 }
 
 function loadSession() {
@@ -197,8 +219,7 @@ export function AuthProvider({ children }) {
     (async () => {
       try {
         const { user } = await apiRequest('/auth/me', { token });
-        const dbClients =
-          user.rol === 'superadmin' ? [] : await apiRequest('/clientes', { token });
+        const dbClients = needsClients(user) ? await apiRequest('/clientes', { token }) : [];
         if (!cancelled) {
           setSession((previous) =>
             previous && previous.token === token
@@ -228,10 +249,9 @@ export function AuthProvider({ children }) {
         method: 'POST',
         body: { email: String(email || '').trim(), password: String(password || '') },
       });
-      const dbClients =
-        data.user.rol === 'superadmin'
-          ? []
-          : await apiRequest('/clientes', { token: data.token });
+      const dbClients = needsClients(data.user)
+        ? await apiRequest('/clientes', { token: data.token })
+        : [];
       setSession(buildSession(data.user, dbClients, data.token));
       return true;
     } catch (error) {
@@ -307,6 +327,54 @@ export function AuthProvider({ children }) {
     [session?.token]
   );
 
+  /** Cambio de clave propio; obligatorio al entrar con una clave temporal. */
+  const changePassword = useCallback(
+    async (claveActual, claveNueva) => {
+      if (!session?.token) {
+        throw new ApiError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
+      }
+      await apiRequest('/auth/cambiar-clave', {
+        method: 'POST',
+        token: session.token,
+        body: { clave_actual: claveActual, clave_nueva: claveNueva },
+      });
+      const { user } = await apiRequest('/auth/me', { token: session.token });
+      const dbClients = needsClients(user)
+        ? await apiRequest('/clientes', { token: session.token })
+        : [];
+      setSession((previous) =>
+        previous && previous.token === session.token
+          ? buildSession(user, dbClients, previous.token, previous)
+          : previous
+      );
+    },
+    [session?.token]
+  );
+
+  /** La empresa acepta el tratamiento de datos; al terminar se habilita la app. */
+  const acceptDataTreatment = useCallback(
+    async (payload) => {
+      if (!session?.token) {
+        throw new ApiError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
+      }
+      await apiRequest('/datos/tratamiento/aceptar', {
+        method: 'POST',
+        token: session.token,
+        body: payload,
+      });
+      const { user } = await apiRequest('/auth/me', { token: session.token });
+      const dbClients = needsClients(user)
+        ? await apiRequest('/clientes', { token: session.token })
+        : [];
+      setSession((previous) =>
+        previous && previous.token === session.token
+          ? buildSession(user, dbClients, previous.token, previous)
+          : previous
+      );
+    },
+    [session?.token]
+  );
+
   const logout = useCallback(() => {
     setAuthError('');
     setSession(null);
@@ -324,6 +392,10 @@ export function AuthProvider({ children }) {
 
   const isOperator = session?.role === 'operador';
   const isSuperadmin = session?.role === 'superadmin';
+  const readOnly = Boolean(session?.readOnly);
+  const canManageUsers = Boolean(session?.canManageUsers);
+  const mustChangePassword = Boolean(session?.mustChangePassword);
+  const dataTreatmentPending = Boolean(session?.dataTreatmentPending);
 
   const clients = useMemo(() => session?.clients || [], [session]);
 
@@ -343,6 +415,12 @@ export function AuthProvider({ children }) {
       busy,
       isOperator,
       isSuperadmin,
+      readOnly,
+      canManageUsers,
+      mustChangePassword,
+      dataTreatmentPending,
+      acceptDataTreatment,
+      changePassword,
       clients,
       activeClient,
       activeClientId: session?.activeClientId || null,
@@ -362,6 +440,12 @@ export function AuthProvider({ children }) {
       busy,
       isOperator,
       isSuperadmin,
+      readOnly,
+      canManageUsers,
+      mustChangePassword,
+      dataTreatmentPending,
+      acceptDataTreatment,
+      changePassword,
       clients,
       activeClient,
       authError,
