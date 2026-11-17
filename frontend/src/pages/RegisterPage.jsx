@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
   KeyRound,
   LockKeyhole,
   Sparkles,
@@ -104,21 +103,13 @@ export default function RegisterPage() {
             <h2>Crea tu cuenta</h2>
           </div>
           <p className="login-card-sub">
-            Creas la empresa con su acceso. Luego, dentro de TURNSOFT, asignas a
-            los administradores y validadores. Sin tarjeta ni plan.
+            Un solo paso: los datos de tu empresa y el correo y la clave con que
+            ingresarás después. Sin tarjeta ni plan.
           </p>
 
           {authError || error ? <div className="form-error">{error || authError}</div> : null}
 
           <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><Building2 size={16} /></span>
-              <div>
-                <strong>Datos de la empresa</strong>
-                <small>Así aparecerá tu empresa en TURNSOFT.</small>
-              </div>
-            </div>
-
             <div className="register-grid">
               <label className="field register-full">
                 <span className="field-label">Razón social</span>
@@ -175,21 +166,8 @@ export default function RegisterPage() {
                   autoComplete="address-level2"
                 />
               </label>
-            </div>
-          </div>
-
-          <div className="login-section">
-            <div className="login-section-head">
-              <span className="login-section-icon"><UserRound size={16} /></span>
-              <div>
-                <strong>Acceso de la empresa</strong>
-                <small>Con este correo y clave entra tu empresa a TURNSOFT.</small>
-              </div>
-            </div>
-
-            <div className="register-grid">
               <label className="field register-full">
-                <span className="field-label">Correo de acceso</span>
+                <span className="field-label">Correo</span>
                 <div className="login-input-wrap">
                   <UserRound size={16} />
                   <input
