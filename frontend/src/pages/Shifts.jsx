@@ -10,6 +10,7 @@ import {
 } from '@shared/dates.js';
 import { getAllowedDailyHours } from '@shared/model.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
+import { plantillaToShift, shiftKey } from '../lib/baseImport.js';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import {
   Badge,
@@ -114,35 +115,18 @@ export default function Shifts() {
     setImporting(true);
     try {
       const base = await apiRequest('/turno-plantillas', { token });
-      const existentes = new Set(
-        scenario.shifts.map((shift) => String(shift.name || '').trim().toLowerCase())
-      );
+      const existentes = new Set(scenario.shifts.map((shift) => shiftKey(shift.name)));
       const nuevas = (Array.isArray(base) ? base : []).filter(
-        (plantilla) =>
-          !existentes.has(String(plantilla.nombre || '').trim().toLowerCase())
+        (plantilla) => !existentes.has(shiftKey(plantilla.nombre))
       );
 
       if (!nuevas.length) {
-        notify('Los horarios base de Mi empresa ya están importados en este escenario.', 'info');
+        notify('Los horarios base de Mi empresa ya están en esta planificación.', 'info');
         return;
       }
 
       nuevas.forEach((plantilla) => {
-        addShift(scenario.id, {
-          name: plantilla.nombre,
-          code: plantilla.codigo || String(plantilla.nombre || 'T').slice(0, 3).toUpperCase(),
-          start: String(plantilla.hora_inicio || '09:00').slice(0, 5),
-          end: String(plantilla.hora_fin || '18:00').slice(0, 5),
-          breakMinutes: Number(plantilla.minutos_colacion) || 0,
-          night: Boolean(plantilla.es_nocturno),
-          color: plantilla.color || COLORS[0],
-          coverage: Array.isArray(plantilla.cobertura_semanal)
-            ? plantilla.cobertura_semanal.slice(0, 7).map((value) => Number(value) || 0)
-            : [...DEFAULT_COVERAGE],
-          requiredCertifications: Array.isArray(plantilla.certificaciones_requeridas)
-            ? plantilla.certificaciones_requeridas
-            : [],
-        });
+        addShift(scenario.id, plantillaToShift(plantilla, { color: COLORS[0], coverage: DEFAULT_COVERAGE }));
       });
 
       notify(
@@ -342,7 +326,7 @@ export default function Shifts() {
                 </label>
               ))}
             </div>
-            <span className="field-hint">El domingo y los festivos también se ajustan por las reglas de operación del escenario.</span>
+            <span className="field-hint">El domingo y los festivos también se ajustan por las reglas de operación de la planificación.</span>
           </div>
 
           <Field label="Certificaciones exigidas" hint="Sepáralas con coma. Ej: OS-10, Seguridad minera." className="field-full">

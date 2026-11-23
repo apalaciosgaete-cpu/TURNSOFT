@@ -341,7 +341,7 @@ export function TurnsoftProvider({ children }) {
     (scenarioId, { employeeId, date, portion = 'full', halfPeriod = 'first', reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
       if (!scenario || readOnly || !canAccessScenario(scenario)) {
-        return { ok: false, error: 'No tienes acceso a este escenario.' };
+        return { ok: false, error: 'No tienes acceso a esta planificación.' };
       }
       if (!scenario.schedule) {
         return { ok: false, error: 'Genera el horario antes de registrar novedades.' };
@@ -436,7 +436,7 @@ export function TurnsoftProvider({ children }) {
     (scenarioId, { employeeId, offDate, workDate, reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
       if (!scenario || readOnly || !canAccessScenario(scenario)) {
-        return { ok: false, error: 'No tienes acceso a este escenario.' };
+        return { ok: false, error: 'No tienes acceso a esta planificación.' };
       }
       if (!scenario.schedule) {
         return { ok: false, error: 'Genera el horario antes de registrar novedades.' };
@@ -521,7 +521,7 @@ export function TurnsoftProvider({ children }) {
     (scenarioId, { employeeId, date, replacementId, reason = '' } = {}) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
       if (!scenario || readOnly || !canAccessScenario(scenario)) {
-        return { ok: false, error: 'No tienes acceso a este escenario.' };
+        return { ok: false, error: 'No tienes acceso a esta planificación.' };
       }
       if (!scenario.schedule) {
         return { ok: false, error: 'Genera el horario antes de registrar novedades.' };
@@ -658,10 +658,10 @@ export function TurnsoftProvider({ children }) {
     (scenarioId, exceptionId) => {
       const scenario = state.scenarios.find((item) => item.id === scenarioId);
       if (!scenario || readOnly || !canAccessScenario(scenario)) {
-        return { ok: false, error: 'No tienes acceso a este escenario.' };
+        return { ok: false, error: 'No tienes acceso a esta planificación.' };
       }
       if (!scenario.schedule) {
-        return { ok: false, error: 'Este escenario no tiene horario.' };
+        return { ok: false, error: 'Esta planificación no tiene horario.' };
       }
       if (!getExceptions(scenario).some((exception) => exception.id === exceptionId)) {
         return { ok: false, error: 'La novedad ya no existe.' };
@@ -922,23 +922,60 @@ export function TurnsoftProvider({ children }) {
         notify('Tu cuenta de validador solo puede consultar y aprobar.', 'error');
         return null;
       }
-      const requestedClientId = data.clientId || null;
+      // El acceso de la empresa puede planificar su propia operación (sin cliente) o la de un cliente.
       const targetClientId = isOperator
-        ? requestedClientId || activeClientId || null
+        ? data.clientId === undefined
+          ? activeClientId || null
+          : data.clientId || null
         : session.clientId;
-      const client = clients.find((item) => item.id === targetClientId);
-      if (!client) {
-        notify('Selecciona un cliente antes de crear el escenario.', 'error');
+      const client = clients.find((item) => item.id === targetClientId) || null;
+      if (!isOperator && !client) {
+        notify('No se pudo identificar tu cuenta de cliente.', 'error');
         return null;
       }
 
-      const sector = data.sector || client.sector || 'seguridad';
+      const sector = data.sector || client?.sector || session.empresaSector || 'seguridad';
       const engine = SECTOR_ENGINE_PRESETS[sector] || SECTOR_ENGINE_PRESETS.logistica;
       const id = uid('sc');
       const days = Number(data.days) || (sector === 'seguridad' ? 32 : 28);
       const startDate = data.startDate || todayISO();
       const location =
-        data.location || [client.address, client.city].filter(Boolean).join(', ') || '';
+        data.location || [client?.address, client?.city].filter(Boolean).join(', ') || '';
+      const ownerName = client?.name || session.empresa || 'la empresa';
+      const rules = getSectorRules(sector);
+      // Personal y turnos traídos de la base de la empresa (opcionales); conservan los mismos valores por defecto que al agregarlos a mano.
+      const initialEmployees = (Array.isArray(data.employees) ? data.employees : []).map(
+        (employee, index) => ({
+          name: 'Nuevo trabajador',
+          role: '',
+          weeklyContractHours: Number(rules?.maxWeeklyHours) || 42,
+          active: true,
+          certifications: [],
+          unavailableWeekdays: [],
+          preferredShiftIds: [],
+          phone: '',
+          startDate,
+          color: EMPLOYEE_COLORS[index % EMPLOYEE_COLORS.length],
+          ...employee,
+          id: uid('emp'),
+        })
+      );
+      const initialShifts =
+        Array.isArray(data.shifts) && data.shifts.length
+          ? data.shifts.map((shift) => ({
+              name: 'Nuevo turno',
+              code: 'T',
+              start: '09:00',
+              end: '18:00',
+              breakMinutes: 60,
+              color: '#0f766e',
+              night: false,
+              coverage: [1, 1, 1, 1, 1, 0, 0],
+              requiredCertifications: [],
+              ...shift,
+              id: uid('shift'),
+            }))
+          : getSectorShifts(sector);
 
       setState((previous) => ({
         ...previous,
@@ -947,19 +984,19 @@ export function TurnsoftProvider({ children }) {
           ...previous.scenarios,
           {
             id,
-            name: data.name?.trim() || `Operación ${client.name}`,
-            company: data.company?.trim() || client.legalName || client.name,
+            name: data.name?.trim() || `Planificación ${ownerName}`,
+            company: data.company?.trim() || client?.legalName || client?.name || session.empresa || '',
             location,
             sector,
-            clientId: client.id,
-            clientName: client.name,
+            clientId: client?.id || null,
+            clientName: client?.name || '',
             operatorName: session.empresa || '',
             startDate,
             endDate: addDays(startDate, days - 1),
             days,
-            employees: [],
-            shifts: getSectorShifts(sector),
-            rules: getSectorRules(sector),
+            employees: initialEmployees,
+            shifts: initialShifts,
+            rules,
             holidays: [],
             regions: [],
             schedule: null,
@@ -971,7 +1008,7 @@ export function TurnsoftProvider({ children }) {
           },
         ],
       }));
-      notify(`Escenario creado para ${client.name}. Ajusta la dotación y genera el horario.`, 'info');
+      notify(data.notice || 'Planificación creada. Revisa la dotación y genera el horario.', 'info');
       return id;
     },
     [session, readOnly, isOperator, activeClientId, clients, notify]
@@ -999,7 +1036,7 @@ export function TurnsoftProvider({ children }) {
           ],
         };
       });
-      notify('Escenario duplicado. Genera un nuevo horario para la copia.', 'info');
+      notify('Planificación duplicada. Genera un nuevo horario para la copia.', 'info');
     },
     [findOwned, notify]
   );
@@ -1009,11 +1046,6 @@ export function TurnsoftProvider({ children }) {
       setState((previous) => {
         const target = findOwned(previous, scenarioId);
         if (!target) return previous;
-
-        const sameAccount = previous.scenarios.filter(
-          (scenario) => scenario.clientId === target.clientId
-        );
-        if (sameAccount.length <= 1) return previous;
 
         const scenarios = previous.scenarios.filter((scenario) => scenario.id !== scenarioId);
         const remaining = scenarios.filter((scenario) =>
@@ -1028,7 +1060,7 @@ export function TurnsoftProvider({ children }) {
               : previous.activeScenarioId,
         };
       });
-      notify('Escenario eliminado.', 'info');
+      notify('Planificación eliminada.', 'info');
     },
     [findOwned, notify, session, isOperator, activeClientId]
   );

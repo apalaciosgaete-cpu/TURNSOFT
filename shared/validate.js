@@ -77,7 +77,7 @@ export function validateScenarioConfig(scenario) {
           'error',
           'excepcional-sin-autorizacion',
           'Régimen excepcional sin autorización declarada',
-          'El escenario usa un régimen excepcional, pero no está marcado como autorizado. Los turnos sobre 10 h no deben generarse hasta contar con la autorización aplicable.'
+          'Esta planificación usa un régimen excepcional, pero no está marcado como autorizado. Los turnos sobre 10 h no deben generarse hasta contar con la autorización aplicable.'
         )
       );
     } else if (!rules.exceptionalReference?.trim()) {
@@ -208,7 +208,7 @@ export function validateScenarioConfig(scenario) {
         'info',
         'festivos-cerrado',
         'La operación se cierra en festivos',
-        `Se detectaron ${holidays.length} feriado(s) en el período. La cobertura se ajustará a cero esos días porque el escenario no permite trabajar festivos.`
+        `Se detectaron ${holidays.length} feriado(s) en el período. La cobertura se ajustará a cero esos días porque la planificación no permite trabajar festivos.`
       )
     );
   }
@@ -397,7 +397,7 @@ export function validateSchedule(scenario, schedule) {
           'warning',
           'novedad-sin-trabajador',
           'Novedad asociada a un trabajador inexistente',
-          `La novedad ${exception.id} apunta a una persona que no está activa en el escenario.`
+          `La novedad ${exception.id} apunta a una persona que no está activa en la planificación.`
         )
       );
       continue;

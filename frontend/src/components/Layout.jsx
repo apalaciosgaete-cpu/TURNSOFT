@@ -5,11 +5,17 @@ import {
   ArrowRight,
   BarChart3,
   BookOpen,
+  Briefcase,
   Building2,
   CalendarDays,
+  CalendarRange,
+  Camera,
   CheckCircle2,
+  ChevronDown,
   Clock3,
+  Contact,
   Headphones,
+  ImagePlus,
   Info,
   LayoutDashboard,
   UserCog,
@@ -29,23 +35,28 @@ import { formatRange } from '@shared/dates.js';
 import { useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import { trialDaysLeft } from '../lib/format.js';
-import { Badge, Button, SectorIcon } from './ui.jsx';
+import { Badge, Button, EmptyState } from './ui.jsx';
 import { BrandMark } from './Brand.jsx';
+import { CompanyMark, useCompanyLogo } from './CompanyMark.jsx';
 import { ScenarioModal } from './ScenarioModal.jsx';
 
 const PAGE_META = {
-  '/': { title: 'Panel de control', subtitle: 'Resumen operativo y cumplimiento del escenario activo.' },
+  '/': { title: 'Panel de control', subtitle: 'Resumen operativo y cumplimiento de la planificación activa.' },
   '/horario': { title: 'Horario', subtitle: 'Grilla editable por persona y día. Cada cambio se revalida al instante.' },
-  '/personal': { title: 'Personal', subtitle: 'Dotación, contratos, disponibilidad y certificaciones.' },
+  '/personal': { title: 'Dotación', subtitle: 'Personas de esta planificación: contratos, disponibilidad y certificaciones.' },
   '/turnos': { title: 'Turnos', subtitle: 'Plantillas de turno, colación y cobertura por día de la semana.' },
   '/reglas': { title: 'Reglas de jornada', subtitle: 'Parámetros con los que TURNSOFT genera y valida el horario.' },
   '/reportes': { title: 'Reportes', subtitle: 'Métricas de cumplimiento, hallazgos y exportación.' },
   '/legal': { title: 'Base legal', subtitle: 'Fuentes, hitos de jornada y criterios aplicados en Chile.' },
-  '/clientes': { title: 'Clientes', subtitle: 'Cuentas bajo la operación, aislamiento y acceso a cada servicio.' },
+  '/clientes': { title: 'Clientes', subtitle: 'Solo si prestas servicio a otras empresas: cada cliente tiene su operación aislada.' },
   '/usuarios': { title: 'Usuarios', subtitle: 'Asigna administradores y validadores de tu empresa.' },
-  '/empresa': { title: 'Mi empresa', subtitle: 'Datos de la empresa, base de trabajadores y horarios de entrada y salida.' },
+  '/empresa': { title: 'Mi empresa', subtitle: 'Logo, datos de la empresa y horarios de entrada y salida.' },
+  '/trabajadores': { title: 'Trabajadores', subtitle: 'Base de datos de trabajadores de tu empresa. Alimenta cada planificación.' },
   '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con TURNSOFT.' },
 };
+
+// Páginas que dependen de la planificación activa.
+const PLANNING_ROUTES = new Set(['/', '/horario', '/personal', '/turnos', '/reglas', '/reportes']);
 
 const NOTICE_ICONS = { success: CheckCircle2, error: AlertTriangle, info: Info };
 
@@ -61,6 +72,7 @@ export function Layout() {
     notice,
     dismissNotice,
   } = useTurnsoft();
+  const companyLogo = useCompanyLogo();
   const {
     session,
     isOperator,
@@ -81,7 +93,7 @@ export function Layout() {
   const meta = isClientAccount
     ? {
         title: 'Mi cuenta',
-        subtitle: 'Tu operación aislada, tus escenarios y los datos de contacto de tu cuenta.',
+        subtitle: 'Tu operación aislada, tus planificaciones y los datos de contacto de tu cuenta.',
       }
     : PAGE_META[location.pathname] || PAGE_META['/'];
   const sector = activeScenario ? SECTOR_META[activeScenario.sector] : null;
@@ -90,26 +102,19 @@ export function Layout() {
   const warnings = activeValidation?.metrics?.warnings || 0;
   const NoticeIcon = notice ? NOTICE_ICONS[notice.tone] || Info : Info;
   const trialDays = trialDaysLeft(session?.pruebaFin);
-  const showTrial = isOperator && session?.empresaEstado === 'prueba';
+  const showTrial = isOperator && session?.empresaEstado === 'prueba' && location.pathname !== '/empresa';
+  const isPlanningPage = PLANNING_ROUTES.has(location.pathname);
+  const needsPlanning = isPlanningPage && location.pathname !== '/' && !activeScenario;
+  const sectorLabel = SECTOR_META[session?.empresaSector]?.label || '';
 
   const navGroups = [
     {
       label: 'Operación',
       items: [
         { to: '/', label: 'Panel', icon: LayoutDashboard, end: true },
-        ...(isOperator
-          ? [{ to: '/empresa', label: 'Mi empresa', icon: Building2 }]
-          : []),
-        ...(canManageUsers
-          ? [{ to: '/usuarios', label: 'Usuarios', icon: UserCog }]
-          : []),
-        {
-          to: '/clientes',
-          label: isOperator ? 'Clientes' : 'Mi cuenta',
-          icon: isOperator ? Building2 : UserRound,
-        },
+        ...(!isOperator ? [{ to: '/clientes', label: 'Mi cuenta', icon: UserRound }] : []),
         { to: '/horario', label: 'Horario', icon: CalendarDays },
-        { to: '/personal', label: 'Personal', icon: Users },
+        { to: '/personal', label: 'Dotación', icon: Users },
         { to: '/turnos', label: 'Turnos', icon: Clock3 },
       ],
     },
@@ -121,6 +126,21 @@ export function Layout() {
         { to: '/legal', label: 'Base legal', icon: BookOpen },
       ],
     },
+    ...(isOperator
+      ? [
+          {
+            label: 'Administración',
+            items: [
+              { to: '/empresa', label: 'Mi empresa', icon: Building2 },
+              { to: '/trabajadores', label: 'Trabajadores', icon: Contact },
+              ...(canManageUsers
+                ? [{ to: '/usuarios', label: 'Usuarios', icon: UserCog }]
+                : []),
+              { to: '/clientes', label: 'Clientes', icon: Briefcase },
+            ],
+          },
+        ]
+      : []),
     {
       label: 'Ayuda',
       items: [{ to: '/soporte', label: 'Soporte', icon: Headphones }],
@@ -158,26 +178,56 @@ export function Layout() {
           </button>
         </div>
 
-        <div className="client-picker-box">
-          <span className="scenario-picker-label">Cliente activo</span>
-          {isOperator ? (
-            <div className="scenario-select-row">
-              <Building2 size={17} className="client-picker-icon" />
-              <select
-                className="scenario-select"
-                value={activeClientId || ''}
-                onChange={(event) => selectClient(event.target.value || null)}
-                aria-label="Elegir cliente"
+        {isOperator ? (
+          <div className="company-box">
+            <div className="company-box-main">
+              <button
+                type="button"
+                className="company-logo-btn"
+                onClick={companyLogo.pick}
+                disabled={!companyLogo.canEdit || companyLogo.busy}
+                title={companyLogo.canEdit ? 'Cambiar el logo de la empresa' : undefined}
+                aria-label={companyLogo.canEdit ? 'Cambiar el logo de la empresa' : 'Logo de la empresa'}
               >
-                <option value="">Todos los clientes</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </select>
+                <CompanyMark name={session?.empresa} logo={session?.empresaLogo} size={46} />
+                {companyLogo.canEdit ? (
+                  <span className="company-logo-edit"><Camera size={12} /></span>
+                ) : null}
+              </button>
+              <div className="company-box-copy">
+                <span className="company-box-label">Tu empresa</span>
+                <strong title={session?.empresa}>{session?.empresa}</strong>
+                {sectorLabel ? <span>{sectorLabel}</span> : null}
+              </div>
             </div>
-          ) : (
+            {companyLogo.canEdit && !session?.empresaLogo ? (
+              <button type="button" className="company-logo-cta" onClick={companyLogo.pick} disabled={companyLogo.busy}>
+                <ImagePlus size={14} /> {companyLogo.busy ? 'Subiendo…' : 'Subir logo de la empresa'}
+              </button>
+            ) : null}
+            {clients.length > 0 ? (
+              <label className="company-scope">
+                <span>Ver la operación de</span>
+                <select
+                  className="scenario-select"
+                  value={activeClientId || ''}
+                  onChange={(event) => selectClient(event.target.value || null)}
+                  aria-label="Elegir cliente"
+                >
+                  <option value="">Toda la empresa</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {companyLogo.input}
+          </div>
+        ) : (
+          <div className="client-picker-box">
+            <span className="scenario-picker-label">Cliente</span>
             <div className="client-static">
               <Building2 size={17} />
               <div>
@@ -185,58 +235,12 @@ export function Layout() {
                 <span>{activeClient?.legalName}</span>
               </div>
             </div>
-          )}
-          {isOperator ? (
-            <div className="scenario-picker-meta">
-              <span>{activeClient ? activeClient.legalName : `${clients.length} clientes bajo tu operación`}</span>
-              <span>{activeClient ? activeClient.city : 'Cada cuenta ve solo sus propios datos'}</span>
-            </div>
-          ) : (
             <div className="client-isolation-pill">
               <ShieldAlert size={13} />
               Cuenta aislada: solo tu operación
             </div>
-          )}
-        </div>
-
-        <div className="scenario-picker-box">
-          <span className="scenario-picker-label">Escenario activo</span>
-          {scenarios.length ? (
-            <>
-              <div className="scenario-select-row">
-                {sector ? <SectorIcon sector={activeScenario.sector} meta={sector} size={17} /> : null}
-                <select
-                  className="scenario-select"
-                  value={activeScenarioId}
-                  onChange={(event) => selectScenario(event.target.value)}
-                  aria-label="Elegir escenario"
-                >
-                  {scenarios.map((scenario) => (
-                    <option key={scenario.id} value={scenario.id}>
-                      {SECTOR_META[scenario.sector]?.short || scenario.sector} · {scenario.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {activeScenario ? (
-                <div className="scenario-picker-meta">
-                  <span>{activeScenario.company}</span>
-                  <span>{formatRange(activeScenario.startDate, activeScenario.days)}</span>
-                  {activeScenario.clientName ? <span>Cliente: {activeScenario.clientName}</span> : null}
-                </div>
-              ) : null}
-            </>
-          ) : (
-            <div className="scenario-empty">
-              No hay escenarios para esta cuenta. Crea el primero para comenzar.
-            </div>
-          )}
-          {readOnly ? null : (
-            <button type="button" className="scenario-add" onClick={() => setScenarioModal(true)}>
-              <Plus size={15} /> Nuevo escenario
-            </button>
-          )}
-        </div>
+          </div>
+        )}
 
         <nav className="sidebar-nav">
           {navGroups.map((group) => (
@@ -325,39 +329,72 @@ export function Layout() {
             </button>
             <div>
               <div className="topbar-eyebrow">
-                <Badge tone="info" className="client-badge">
-                  <Building2 size={13} />
-                  {activeClient?.name || (isOperator ? 'Todos los clientes' : session?.clientName)}
-                </Badge>
-                {sector ? (
-                  <Badge tone="sector" className="sector-badge">
-                    <SectorIcon sector={activeScenario.sector} meta={sector} size={13} />
-                    {sector.short}
+                {isPlanningPage && scenarios.length ? (
+                  <div className="plan-switch">
+                    <CalendarRange size={15} />
+                    <select
+                      value={activeScenarioId || ''}
+                      onChange={(event) => selectScenario(event.target.value)}
+                      aria-label="Elegir planificación"
+                    >
+                      {scenarios.map((scenario) => (
+                        <option key={scenario.id} value={scenario.id}>
+                          {scenario.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="plan-switch-caret" />
+                    {readOnly ? null : (
+                      <button
+                        type="button"
+                        className="plan-switch-add"
+                        onClick={() => setScenarioModal(true)}
+                        title="Nueva planificación"
+                        aria-label="Nueva planificación"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+                {activeClient || !isOperator ? (
+                  <Badge tone="info" className="client-badge">
+                    <Building2 size={13} />
+                    {activeClient?.name || session?.clientName}
                   </Badge>
                 ) : null}
-                {activeScenario ? <span>{formatRange(activeScenario.startDate, activeScenario.days)}</span> : null}
-                {activeScenario?.schedule ? (
-                  <Badge tone={errors > 0 ? 'danger' : warnings > 0 ? 'warn' : 'ok'} dot>
-                    {errors > 0 ? `${errors} error${errors === 1 ? '' : 'es'}` : warnings > 0 ? `${warnings} advertencia${warnings === 1 ? '' : 's'}` : 'Cumplimiento OK'}
-                  </Badge>
-                ) : (
-                  <Badge tone="neutral" dot>Sin horario</Badge>
-                )}
+                {isPlanningPage && activeScenario ? <span>{formatRange(activeScenario.startDate, activeScenario.days)}</span> : null}
+                {isPlanningPage && activeScenario ? (
+                  activeScenario.schedule ? (
+                    <Badge tone={errors > 0 ? 'danger' : warnings > 0 ? 'warn' : 'ok'} dot>
+                      {errors > 0 ? `${errors} error${errors === 1 ? '' : 'es'}` : warnings > 0 ? `${warnings} advertencia${warnings === 1 ? '' : 's'}` : 'Cumplimiento OK'}
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral" dot>Sin horario</Badge>
+                  )
+                ) : null}
+                {isPlanningPage && !activeScenario ? (
+                  <Badge tone="neutral" dot>Sin planificación</Badge>
+                ) : null}
               </div>
               <h1 className="topbar-title">{meta.title}</h1>
             </div>
           </div>
           <div className="topbar-actions">
             <span className="topbar-sub">{meta.subtitle}</span>
-            {location.pathname === '/soporte' || location.pathname === '/usuarios' || readOnly ? null : (
+            {!isPlanningPage || readOnly ? null : activeScenario ? (
               <Button
                 variant="primary"
                 icon={busy ? RefreshCw : Sparkles}
                 onClick={() => generate(activeScenarioId)}
-                disabled={busy || !activeScenario}
+                disabled={busy}
                 className={busy ? 'is-busy' : ''}
               >
-                {busy ? 'Generando…' : activeScenario?.schedule ? 'Regenerar horario' : 'Generar horario'}
+                {busy ? 'Generando…' : activeScenario.schedule ? 'Regenerar horario' : 'Generar horario'}
+              </Button>
+            ) : (
+              <Button variant="primary" icon={Plus} onClick={() => setScenarioModal(true)}>
+                Nueva planificación
               </Button>
             )}
           </div>
@@ -379,7 +416,24 @@ export function Layout() {
               </Link>
             </div>
           ) : null}
-          <Outlet />
+          {needsPlanning ? (
+            <div className="page">
+              <EmptyState
+                icon={CalendarRange}
+                title="Aún no tienes una planificación"
+                description="Una planificación es el período que vas a programar, por ejemplo un mes, con su dotación y sus turnos. Créala para trabajar aquí."
+                action={
+                  readOnly ? null : (
+                    <Button icon={Plus} onClick={() => setScenarioModal(true)}>
+                      Crear planificación
+                    </Button>
+                  )
+                }
+              />
+            </div>
+          ) : (
+            <Outlet />
+          )}
         </main>
 
         <footer className="app-footer">

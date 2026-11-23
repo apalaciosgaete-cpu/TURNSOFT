@@ -232,7 +232,7 @@ export default function Schedule() {
         <Card>
           <EmptyState
             icon={Sparkles}
-            title="Este escenario todavía no tiene horario"
+            title="Esta planificación todavía no tiene horario"
             description="El motor distribuirá la dotación según el patrón del sector, las reglas de jornada, los descansos y las certificaciones vigentes."
             action={readOnly ? null : <Button icon={Sparkles} onClick={() => generate(scenario.id)} disabled={busy}>{busy ? 'Generando…' : 'Generar horario'}</Button>}
           />

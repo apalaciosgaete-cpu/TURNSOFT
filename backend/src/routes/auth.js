@@ -45,6 +45,8 @@ function publicUser(user) {
     cliente_nombre: user.cliente_nombre || null,
     empresa_nombre: user.empresa_nombre || null,
     empresa_estado: user.empresa_estado || null,
+    empresa_sector: user.empresa_sector || null,
+    empresa_logo: user.empresa_logo || null,
     prueba_fin: user.prueba_fin || null,
     plan_nombre: user.plan_nombre || null,
     debe_cambiar_clave: Boolean(user.debe_cambiar_clave),
@@ -185,6 +187,7 @@ router.post('/login', rateLimits.loginPorIp, rateLimits.loginPorCuenta, async (r
     const result = await pool.query(
       `SELECT u.*, c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
+              e.sector AS empresa_sector, e.logo AS empresa_logo,
               p.nombre AS plan_nombre,
               EXISTS (
                 SELECT 1 FROM aceptaciones_datos a
@@ -240,6 +243,7 @@ router.get('/me', authenticateAllowingPending, async (req, res) => {
       `SELECT u.id, u.email, u.nombre, u.rol, u.empresa_id, u.cliente_id, u.debe_cambiar_clave,
               c.nombre AS cliente_nombre, e.razon_social AS empresa_nombre,
               e.estado AS empresa_estado, e.prueba_fin,
+              e.sector AS empresa_sector, e.logo AS empresa_logo,
               p.nombre AS plan_nombre,
               EXISTS (
                 SELECT 1 FROM aceptaciones_datos a

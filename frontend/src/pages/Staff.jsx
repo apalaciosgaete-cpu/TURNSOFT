@@ -3,6 +3,7 @@ import { BadgeCheck, Download, Pencil, Plus, Search, Trash2, UserCheck, UserX, U
 import { SECTOR_META } from '@shared/legal.js';
 import { addDays, diffDays, formatDateShort } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
+import { activeGuardias, guardiaToEmployee, workerKey } from '../lib/baseImport.js';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import {
   Avatar,
@@ -199,50 +200,28 @@ export default function Staff() {
     setImporting(true);
     try {
       const base = await apiRequest('/guardias', { token });
-      const key = (name, rut) =>
-        `${String(name || '').trim().toLowerCase()}|${String(rut || '').replace(/\./g, '').toUpperCase()}`;
-      const existentes = new Set(employees.map((employee) => key(employee.name, employee.rut)));
-      const nuevos = (Array.isArray(base) ? base : []).filter(
-        (guardia) =>
-          guardia.activo !== false && !existentes.has(key(guardia.nombre_completo, guardia.rut))
+      const existentes = new Set(employees.map((employee) => workerKey(employee.name, employee.rut)));
+      const nuevos = activeGuardias(base).filter(
+        (guardia) => !existentes.has(workerKey(guardia.nombre_completo, guardia.rut))
       );
 
       if (!nuevos.length) {
-        notify('La base de trabajadores no tiene personas nuevas para importar.', 'info');
+        notify('En Trabajadores no hay personas nuevas para traer a esta planificación.', 'info');
         return;
       }
 
       nuevos.forEach((guardia) => {
-        const certificaciones = [];
-        if (guardia.numero_certificado || guardia.fecha_vencimiento) {
-          certificaciones.push({
-            id: `os10-${guardia.id}`,
-            name: 'OS-10',
-            issuer: guardia.emitido_por || 'OS-10 Carabineros de Chile',
-            expiresAt: guardia.fecha_vencimiento ? String(guardia.fecha_vencimiento).slice(0, 10) : '',
-          });
-        }
-        addEmployee(scenario.id, {
-          name: guardia.nombre_completo,
-          rut: guardia.rut,
-          role: guardia.cargo || '',
-          weeklyContractHours:
-            Number(guardia.horas_semanales_max) ||
-            Number(scenario.rules?.maxWeeklyHours) ||
-            42,
-          startDate: guardia.fecha_contrato
-            ? String(guardia.fecha_contrato).slice(0, 10)
-            : scenario.startDate,
-          phone: guardia.telefono || '',
-          preferredShiftIds: [],
-          unavailableWeekdays: [],
-          certifications: certificaciones,
-          active: true,
-        });
+        addEmployee(
+          scenario.id,
+          guardiaToEmployee(guardia, {
+            weeklyHours: scenario.rules?.maxWeeklyHours,
+            startDate: scenario.startDate,
+          })
+        );
       });
 
       notify(
-        `${nuevos.length} trabajador${nuevos.length === 1 ? '' : 'es'} importado${nuevos.length === 1 ? '' : 's'} desde Mi empresa.`
+        `${nuevos.length} trabajador${nuevos.length === 1 ? '' : 'es'} importado${nuevos.length === 1 ? '' : 's'} desde Trabajadores.`
       );
     } catch (requestError) {
       notify(requestError.message, 'error');
@@ -261,7 +240,7 @@ export default function Staff() {
       </div>
 
       <Card
-        title="Equipo del escenario"
+        title="Equipo de la planificación"
         subtitle={`${meta.label} · ${scenario.company}`}
         actions={
           <div className="card-actions-row">
@@ -378,7 +357,7 @@ export default function Staff() {
                             className="icon-btn danger"
                             title="Eliminar"
                             onClick={() => {
-                              if (window.confirm(`¿Eliminar a ${employee.name} del escenario?`)) {
+                              if (window.confirm(`¿Eliminar a ${employee.name} de la planificación?`)) {
                                 removeEmployee(scenario.id, employee.id);
                               }
                             }}

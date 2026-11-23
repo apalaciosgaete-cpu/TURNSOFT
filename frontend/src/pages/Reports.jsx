@@ -108,7 +108,7 @@ export default function Reports() {
   const exportCsv = () => {
     const rows = [
       ['TURNSOFT - Reporte de cumplimiento'],
-      ['Escenario', scenario.name],
+      ['Planificación', scenario.name],
       ['Empresa', scenario.company],
       ['Sector', meta.label],
       ['Período', formatRange(scenario.startDate, scenario.days)],

@@ -77,7 +77,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Los domingos y los días declarados festivos son de descanso, salvo respecto de las actividades autorizadas por ley para trabajar en esos días.',
     relevance:
-      'Determina si una actividad puede operar domingos y festivos. TURNSOFT permite configurarlo por escenario y alerta cuando se programa trabajo no autorizado.',
+      'Determina si una actividad puede operar domingos y festivos. TURNSOFT permite configurarlo por planificación y alerta cuando se programa trabajo no autorizado.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-35/',
     tags: ['descanso', 'domingo'],
   },
@@ -101,7 +101,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Las empresas o faenas no exceptuadas no pueden distribuir la jornada ordinaria de modo que incluya domingo o festivo, salvo fuerza mayor o autorización en los casos legales.',
     relevance:
-      'TURNSOFT marca como error el trabajo dominical cuando el escenario no está habilitado para operar ese día.',
+      'TURNSOFT marca como error el trabajo dominical cuando la planificación no está habilitada para operar ese día.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-37/',
     tags: ['domingo', 'excepciones'],
   },
@@ -125,7 +125,7 @@ export const LEGAL_SOURCES = [
     summary:
       'El reglamento determina límites y parámetros de distribución de los sistemas excepcionales de jornada y descanso, incluyendo promedios semanales y descansos adicionales.',
     relevance:
-      'Sostiene los escenarios de seguridad y minería con turnos de 12 horas. TURNSOFT exige declarar la autorización y valida el promedio semanal sobre el ciclo.',
+      'Sostiene las planificaciones de seguridad y minería con turnos de 12 horas. TURNSOFT exige declarar la autorización y valida el promedio semanal sobre el ciclo.',
     url: 'https://www.dt.gob.cl/legislacion/1624/w3-propertyvalue-190373.html',
     tags: ['excepcional', '12 horas', 'minería', 'seguridad'],
   },
@@ -286,7 +286,7 @@ export const RULE_CATALOG = [
     unit: 'h',
     group: 'Régimen excepcional',
     citation: 'DS 48/2023 · autorización DT',
-    help: 'TURNSOFT usa este tope solo cuando el escenario está marcado como excepcional y autorizado. No habilita por sí solo un turno de 12 horas.',
+    help: 'TURNSOFT usa este tope solo cuando la planificación está marcada como excepcional y autorizado. No habilita por sí solo un turno de 12 horas.',
   },
   {
     id: 'maxConsecutiveNightShifts',

@@ -28,7 +28,7 @@ export default function Clients() {
   const [clientOpen, setClientOpen] = useState(false);
 
   const handleClientCreated = (client) => {
-    notify(`Cliente ${client.nombre} creado. Ya puedes crear su primer escenario.`, 'success');
+    notify(`Cliente ${client.nombre} creado. Ya puedes crear su primera planificación.`, 'success');
   };
 
   const totals = useMemo(
@@ -65,7 +65,7 @@ export default function Clients() {
           </h2>
           <p>
             {isOperator
-              ? 'Como operador puedes entrar a la operación de cada cliente y administrar sus escenarios. Los usuarios de cada cuenta no ven a los demás.'
+              ? 'Como operador puedes entrar a la operación de cada cliente y administrar sus planificaciones. Los usuarios de cada cuenta no ven a los demás.'
               : `${session?.name}, tu sesión está limitada a ${session?.clientName}. No tienes acceso a otras cuentas, sucursales ni horarios.`}
           </p>
         </div>
@@ -93,7 +93,7 @@ export default function Clients() {
           icon={Building2}
         />
         <Stat
-          label="Escenarios"
+          label="Planificaciones"
           value={totals.scenarios}
           hint="Disponibles en las cuentas visibles"
           icon={CalendarDays}
@@ -101,7 +101,7 @@ export default function Clients() {
         <Stat
           label="Con horario"
           value={totals.scheduled}
-          hint="Escenarios generados o editados"
+          hint="Planificaciones generadas o editadas"
           icon={CheckCircle2}
           tone={totals.scheduled > 0 ? 'ok' : 'default'}
         />
@@ -116,7 +116,7 @@ export default function Clients() {
             <span className="empty-icon"><Building2 size={22} /></span>
             <h3>Crea tu primer cliente</h3>
             <p>
-              Cada cliente tiene su propia cuenta, dotación y escenarios. Podrás
+              Cada cliente tiene su propia cuenta, dotación y planificaciones. Podrás
               agregar más cuando quieras.
             </p>
             {isOperator && !readOnly ? (
@@ -153,7 +153,7 @@ export default function Clients() {
                   <SectorIcon sector={client.sector} meta={meta} size={12} />
                   {meta.short}
                 </Badge>
-                <Badge tone="info">{client.scenarioCount} escenario{client.scenarioCount === 1 ? '' : 's'}</Badge>
+                <Badge tone="info">{client.scenarioCount} planificación{client.scenarioCount === 1 ? '' : 'es'}</Badge>
               </div>
 
               <dl className="client-card-details">
@@ -177,7 +177,7 @@ export default function Clients() {
 
               <div className="client-card-metrics">
                 <div>
-                  <span>Escenarios</span>
+                  <span>Planificaciones</span>
                   <strong>{client.scenarioCount}</strong>
                 </div>
                 <div>
@@ -195,7 +195,7 @@ export default function Clients() {
                   Ver operación
                 </Button>
                 <Button variant="ghost" size="sm" icon={Plus} onClick={() => createScenario(client.id)} hidden={readOnly}>
-                  Nuevo escenario
+                  Nueva planificación
                 </Button>
               </div>
             </article>
@@ -215,7 +215,7 @@ export default function Clients() {
             <div>
               <Users size={18} />
               <strong>Sin cruce de dotación</strong>
-              <p>Los escenarios, trabajadores y horarios visibles pertenecen únicamente a {session?.clientName}.</p>
+              <p>Las planificaciones, trabajadores y horarios visibles pertenecen únicamente a {session?.clientName}.</p>
             </div>
             <div>
               <CalendarDays size={18} />

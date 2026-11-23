@@ -279,7 +279,7 @@ router.post('/generar', authenticateToken, denyValidador, async (req, res) => {
       return res.status(400).json({ error: 'La cuenta no tiene trabajadores activos.' });
     }
     if (!scenario.shifts?.length) {
-      return res.status(400).json({ error: 'El escenario no tiene turnos o puestos configurados.' });
+      return res.status(400).json({ error: 'La planificación no tiene turnos o puestos configurados.' });
     }
 
     const result = await scheduler.plan(scenario, body.options || {});
@@ -382,7 +382,7 @@ router.get('/escenarios/:id', authenticateToken, async (req, res) => {
          AND ($3::uuid IS NULL OR e.cliente_id = $3)`,
       [req.params.id, empresaId || null, clienteId || null]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Escenario no encontrado.' });
+    if (!result.rows.length) return res.status(404).json({ error: 'Planificación no encontrada.' });
     res.json(result.rows[0]);
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
@@ -404,7 +404,7 @@ router.post('/escenarios/:id/publicar', authenticateToken, requireApprover, asyn
        RETURNING id, estado, empresa_id, cliente_id`,
       [req.params.id, empresaId || null, clienteId || null]
     );
-    if (!result.rows.length) return res.status(404).json({ error: 'Escenario no encontrado.' });
+    if (!result.rows.length) return res.status(404).json({ error: 'Planificación no encontrada.' });
     await pool.query(
       `UPDATE horarios SET estado = 'publicado', actualizado_en = NOW()
        WHERE escenario_id = $1`,

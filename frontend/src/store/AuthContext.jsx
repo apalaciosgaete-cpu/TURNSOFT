@@ -130,6 +130,9 @@ function buildSession(user, dbClients, token, previous = null) {
     mustChangePassword: Boolean(user.debe_cambiar_clave),
     dataTreatmentPending: Boolean(user.tratamiento_datos_pendiente),
     empresa: user.empresa_nombre || (isSuperadmin ? 'TURNSOFT' : 'Mi empresa'),
+    empresaId: user.empresa_id || null,
+    empresaSector: user.empresa_sector || null,
+    empresaLogo: user.empresa_logo || null,
     empresaEstado: user.empresa_estado || null,
     pruebaFin: user.prueba_fin || null,
     planName: user.plan_nombre || null,
@@ -375,6 +378,26 @@ export function AuthProvider({ children }) {
     [session?.token]
   );
 
+  /** Sube (imagen en data URL) o quita (null) el logo de la empresa. */
+  const updateCompanyLogo = useCallback(
+    async (imagen) => {
+      if (!session?.token || !session?.empresaId) {
+        throw new ApiError('Tu sesión expiró. Vuelve a iniciar sesión.', 401);
+      }
+      const path = `/empresas/${session.empresaId}/logo`;
+      const data = imagen
+        ? await apiRequest(path, { method: 'PUT', token: session.token, body: { imagen } })
+        : await apiRequest(path, { method: 'DELETE', token: session.token });
+      setSession((previous) =>
+        previous && previous.token === session.token
+          ? { ...previous, empresaLogo: data.logo || null }
+          : previous
+      );
+      return data.logo || null;
+    },
+    [session?.token, session?.empresaId]
+  );
+
   const logout = useCallback(() => {
     setAuthError('');
     setSession(null);
@@ -421,6 +444,7 @@ export function AuthProvider({ children }) {
       dataTreatmentPending,
       acceptDataTreatment,
       changePassword,
+      updateCompanyLogo,
       clients,
       activeClient,
       activeClientId: session?.activeClientId || null,
@@ -446,6 +470,7 @@ export function AuthProvider({ children }) {
       dataTreatmentPending,
       acceptDataTreatment,
       changePassword,
+      updateCompanyLogo,
       clients,
       activeClient,
       authError,

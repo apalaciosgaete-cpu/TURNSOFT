@@ -97,7 +97,7 @@ export default function Rules() {
             {unauthorizedExceptional ? (
               <div className="inline-alert inline-alert-danger">
                 <AlertTriangle size={17} />
-                <span>El escenario usa régimen excepcional sin autorización declarada. Los turnos sobre 10 h se validarán como error.</span>
+                <span>Esta planificación usa régimen excepcional sin autorización declarada. Los turnos sobre 10 h se validarán como error.</span>
               </div>
             ) : null}
           </Card>
