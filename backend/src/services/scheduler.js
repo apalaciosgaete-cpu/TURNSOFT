@@ -240,7 +240,7 @@ async function buildScenarioFromDb({
 async function plan(scenario, options = {}) {
   const shared = await loadShared();
   if (!scenario || typeof scenario !== 'object') {
-    throw new Error('Se requiere un escenario para generar el horario.');
+    throw new Error('Se requiere una planificación para generar el horario.');
   }
   const configFindings = shared.validate.validateScenarioConfig(scenario);
   const schedule = shared.engine.generateSchedule(scenario, {
@@ -265,10 +265,10 @@ function assertScenarioLimits(scenario) {
     throw new Error(`El período debe estar entre 1 y ${LIMITS.days} días.`);
   }
   if (Array.isArray(scenario.employees) && scenario.employees.length > LIMITS.employees) {
-    throw new Error(`El escenario supera el máximo de ${LIMITS.employees} trabajadores.`);
+    throw new Error(`La planificación supera el máximo de ${LIMITS.employees} trabajadores.`);
   }
   if (Array.isArray(scenario.shifts) && scenario.shifts.length > LIMITS.shifts) {
-    throw new Error(`El escenario supera el máximo de ${LIMITS.shifts} turnos.`);
+    throw new Error(`La planificación supera el máximo de ${LIMITS.shifts} turnos.`);
   }
 }
 

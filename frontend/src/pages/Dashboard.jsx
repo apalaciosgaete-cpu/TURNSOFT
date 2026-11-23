@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
   ArrowRight,
-  Building2,
   CalendarDays,
+  CalendarRange,
   CheckCircle2,
   Circle,
   Clock3,
+  Contact,
   Copy,
   Pencil,
   Plus,
@@ -20,7 +21,7 @@ import { SECTOR_META, DISCLAIMER } from '@shared/legal.js';
 import { getHolidayMap } from '@shared/holidays.js';
 import { getTotalRequiredSlots } from '@shared/model.js';
 import { eachDate, formatDateShort, formatRange, weekdayISO, WEEKDAYS_SHORT } from '@shared/dates.js';
-import { useAuth } from '../store/AuthContext.jsx';
+import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import {
   Avatar,
@@ -33,7 +34,6 @@ import {
   SectorIcon,
   Stat,
 } from '../components/ui.jsx';
-import { ClientModal } from '../components/ClientModal.jsx';
 import { ScenarioModal } from '../components/ScenarioModal.jsx';
 
 function scoreTone(score) {
@@ -43,87 +43,101 @@ function scoreTone(score) {
 }
 
 function StartHome() {
-  const { clients, isOperator, activeClientId, selectClient } = useAuth();
-  const { notify } = useTurnsoft();
-  const [clientOpen, setClientOpen] = useState(false);
+  const { session, isOperator, readOnly, token } = useAuth();
   const [scenarioOpen, setScenarioOpen] = useState(false);
-  const [scenarioClientId, setScenarioClientId] = useState(null);
+  // Cuántos trabajadores ya tiene la empresa cargados (null mientras se consulta).
+  const [workerCount, setWorkerCount] = useState(null);
 
-  const hasClients = clients.length > 0;
-  const selectedClient =
-    clients.find((client) => client.id === activeClientId) ||
-    (clients.length === 1 ? clients[0] : null);
+  const trackBase = isOperator && !readOnly;
 
-  const openScenario = (clientId) => {
-    const target =
-      clientId || selectedClient?.id || (clients.length === 1 ? clients[0].id : null);
-    if (!target) {
-      notify('Selecciona un cliente para crear su escenario.', 'error');
-      return;
-    }
-    selectClient(target);
-    setScenarioClientId(target);
-    setScenarioOpen(true);
-  };
+  useEffect(() => {
+    if (!trackBase || !token) return undefined;
+    let cancelled = false;
+    apiRequest('/guardias', { token })
+      .then((lista) => {
+        if (!cancelled) setWorkerCount(Array.isArray(lista) ? lista.filter((item) => item.activo !== false).length : 0);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkerCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [trackBase, token]);
 
-  const handleClientCreated = (client) => {
-    notify(`Cliente ${client.nombre} creado. Ahora define su primer escenario.`, 'success');
-    setScenarioClientId(client.id);
-    setScenarioOpen(true);
-  };
-
+  const hasWorkers = (workerCount || 0) > 0;
   const steps = [
-    { title: 'Cuenta de administrador', detail: 'Empresa y acceso configurados', done: true },
+    { title: 'Cuenta de la empresa', detail: 'Empresa y acceso configurados', done: true },
+    ...(trackBase
+      ? [
+          {
+            title: 'Tus trabajadores',
+            detail: hasWorkers
+              ? `${workerCount} trabajador${workerCount === 1 ? '' : 'es'} en la base`
+              : 'Regístralos una sola vez',
+            done: hasWorkers,
+            active: !hasWorkers && workerCount !== null,
+          },
+        ]
+      : []),
     {
-      title: 'Primer cliente',
-      detail: hasClients ? `${clients.length} cliente${clients.length === 1 ? '' : 's'} creado${clients.length === 1 ? '' : 's'}` : 'Crea la cuenta del mandante',
-      done: hasClients,
+      title: 'Tu primera planificación',
+      detail: 'El período a programar, por ejemplo un mes',
+      done: false,
+      active: !trackBase || hasWorkers,
     },
-    { title: 'Primer escenario', detail: 'Sector, fechas y dotación', done: false, active: hasClients },
-    { title: 'Primer horario', detail: 'Genera y valida el cumplimiento', done: false },
+    { title: 'Tu primer horario', detail: 'Se genera y se valida contra la ley', done: false },
   ];
   const completed = steps.filter((step) => step.done).length;
+
+  const needsWorkers = trackBase && workerCount === 0;
 
   return (
     <div className="page start-home">
       <section className="start-hero">
         <div className="start-hero-copy">
           <span className="start-eyebrow">
-            <Sparkles size={15} /> {hasClients ? 'Siguiente paso' : 'Primeros pasos'}
+            <Sparkles size={15} /> Primeros pasos
           </span>
           <h1>
-            {hasClients
-              ? 'Elige un cliente y crea su primer escenario.'
-              : 'Tu operación parte con el primer cliente.'}
+            {readOnly
+              ? 'Aún no hay planificaciones.'
+              : session?.empresa
+                ? `Armemos el primer horario de ${session.empresa}.`
+                : 'Armemos tu primer horario.'}
           </h1>
           <p>
-            {hasClients
-              ? 'Cada escenario define el período, el sector y la dotación con la que TURNSOFT generará y validará el horario.'
-              : 'La cuenta de administrador ya está lista. Crea el primer cliente para separar su operación, su dotación y sus horarios del resto.'}
+            {readOnly
+              ? 'Cuando el administrador cree la primera planificación y genere el horario, podrás revisarlo y aprobarlo desde aquí.'
+              : needsWorkers
+                ? 'Primero registra a tu personal. Luego defines el período que quieres programar y TURNSOFT propone los turnos respetando la ley; tú ajustas lo que necesites.'
+                : 'Define el período que quieres programar, por ejemplo un mes. TURNSOFT propone los turnos respetando la ley y tú ajustas lo que necesites.'}
           </p>
-          <div className="start-actions">
-            {hasClients ? (
-              <>
-                <Button icon={CalendarDays} onClick={() => openScenario()}>
-                  Crear escenario
-                </Button>
-                {isOperator ? (
-                  <Button variant="soft" icon={Plus} onClick={() => setClientOpen(true)}>
-                    Nuevo cliente
+          {readOnly ? null : (
+            <div className="start-actions">
+              {needsWorkers ? (
+                <>
+                  <Link className="btn btn-primary btn-md" to="/trabajadores">
+                    <Contact size={17} /> Cargar mis trabajadores
+                  </Link>
+                  <Button variant="soft" icon={CalendarRange} onClick={() => setScenarioOpen(true)}>
+                    Crear planificación
                   </Button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <Button icon={Building2} onClick={() => setClientOpen(true)}>
-                  Crear primer cliente
-                </Button>
-                <a className="btn btn-ghost btn-md" href="#primeros-pasos">
-                  Ver cómo funciona
-                </a>
-              </>
-            )}
-          </div>
+                </>
+              ) : (
+                <>
+                  <Button icon={CalendarRange} onClick={() => setScenarioOpen(true)}>
+                    Crear primera planificación
+                  </Button>
+                  {trackBase ? (
+                    <Link className="btn btn-ghost btn-md" to="/trabajadores">
+                      Ver mis trabajadores
+                    </Link>
+                  ) : null}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="start-progress-card">
@@ -148,88 +162,36 @@ function StartHome() {
         </div>
       </section>
 
-      {hasClients ? (
-        <section className="start-section" id="primeros-pasos">
-          <div className="start-section-head">
-            <div>
-              <h2>{isOperator ? 'Clientes disponibles' : 'Tu cuenta'}</h2>
-              <p>Selecciona el cliente cuya operación quieres planificar.</p>
-            </div>
-            {isOperator ? (
-              <Button variant="ghost" size="sm" icon={Plus} onClick={() => setClientOpen(true)}>
-                Agregar cliente
-              </Button>
-            ) : null}
+      <section className="start-section" id="primeros-pasos">
+        <div className="start-section-head">
+          <div>
+            <h2>Tres pasos para tu primer horario</h2>
+            <p>No tienes que configurar todo de una vez: puedes volver a ajustar cada paso.</p>
           </div>
-          <div className="start-client-grid">
-            {clients.map((client) => {
-              const meta = SECTOR_META[client.sector] || SECTOR_META.seguridad;
-              const active = client.id === selectedClient?.id;
-              return (
-                <article
-                  key={client.id}
-                  className={`start-client-card ${active ? 'is-active' : ''}`}
-                  style={{ '--sector-color': meta.accent, '--sector-tint': meta.tint }}
-                >
-                  <SectorIcon sector={client.sector} meta={meta} size={18} />
-                  <div className="start-client-copy">
-                    <strong>{client.name}</strong>
-                    <span>{meta.short}{client.city ? ` · ${client.city}` : ''}</span>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant={active ? 'primary' : 'soft'}
-                    icon={ArrowRight}
-                    onClick={() => openScenario(client.id)}
-                  >
-                    Crear escenario
-                  </Button>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-      ) : (
-        <section className="start-section" id="primeros-pasos">
-          <div className="start-section-head">
-            <div>
-              <h2>Tres pasos para tu primer horario</h2>
-              <p>El flujo está pensado para que no tengas que configurar todo de una vez.</p>
-            </div>
-          </div>
-          <div className="start-step-grid">
-            <article className="start-step-card">
-              <span className="start-step-icon"><Building2 size={20} /></span>
-              <Badge tone="info">Paso 1</Badge>
-              <h3>Cliente</h3>
-              <p>Registra al mandante. Su cuenta queda aislada: no comparte datos con otros clientes.</p>
-            </article>
-            <article className="start-step-card">
-              <span className="start-step-icon"><CalendarDays size={20} /></span>
-              <Badge tone="info">Paso 2</Badge>
-              <h3>Escenario</h3>
-              <p>Define sector, fechas y dotación. Puedes ajustar turnos y reglas antes de generar.</p>
-            </article>
-            <article className="start-step-card">
-              <span className="start-step-icon"><ShieldCheck size={20} /></span>
-              <Badge tone="info">Paso 3</Badge>
-              <h3>Horario validado</h3>
-              <p>Genera la propuesta y revisa cobertura, descansos y cumplimiento legal.</p>
-            </article>
-          </div>
-        </section>
-      )}
+        </div>
+        <div className="start-step-grid">
+          <article className="start-step-card">
+            <span className="start-step-icon"><Contact size={20} /></span>
+            <Badge tone="info">Paso 1</Badge>
+            <h3>Trabajadores</h3>
+            <p>Registra a tu personal una sola vez. Queda en la base de tu empresa para todas tus planificaciones.</p>
+          </article>
+          <article className="start-step-card">
+            <span className="start-step-icon"><CalendarRange size={20} /></span>
+            <Badge tone="info">Paso 2</Badge>
+            <h3>Planificación</h3>
+            <p>Elige el período y el sector. Traes a tu personal y tus turnos con un clic y puedes ajustar las reglas antes de generar.</p>
+          </article>
+          <article className="start-step-card">
+            <span className="start-step-icon"><ShieldCheck size={20} /></span>
+            <Badge tone="info">Paso 3</Badge>
+            <h3>Horario validado</h3>
+            <p>Genera la propuesta y revisa cobertura, descansos y cumplimiento legal. Tú decides qué cambiar.</p>
+          </article>
+        </div>
+      </section>
 
-      <ClientModal
-        open={clientOpen}
-        onClose={() => setClientOpen(false)}
-        onCreated={handleClientCreated}
-      />
-      <ScenarioModal
-        open={scenarioOpen}
-        onClose={() => setScenarioOpen(false)}
-        initialClientId={scenarioClientId}
-      />
+      <ScenarioModal open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
     </div>
   );
 }
@@ -318,11 +280,11 @@ export default function Dashboard() {
                 <span>{scenario.days} días</span>
               </div>
               <h2>{scenario.name}</h2>
-              <p className="hero-company">{scenario.company} · {scenario.location}</p>
+              <p className="hero-company">{[scenario.company, scenario.location].filter(Boolean).join(' · ')}</p>
             </div>
           </div>
 
-          <p className="hero-notes">{scenario.notes || 'Sin notas operativas para este escenario.'}</p>
+          <p className="hero-notes">{scenario.notes || 'Sin notas para esta planificación.'}</p>
 
           <div className="hero-tags">
             <span className="hero-tag"><Users size={14} /> {metrics?.activeEmployees ?? scenario.employees.length} personas activas</span>
@@ -456,9 +418,9 @@ export default function Dashboard() {
       </div>
 
       <Card
-        title="Escenarios"
-        subtitle="Cinco sectores, un mismo motor de cumplimiento. Cambia de escenario sin perder la planificación."
-        actions={<Button variant="soft" size="sm" icon={Plus} onClick={() => setCreateOpen(true)}>Nuevo escenario</Button>}
+        title="Mis planificaciones"
+        subtitle="Cada planificación es un período a programar (por ejemplo, un mes). Cambia entre ellas sin perder nada."
+        actions={<Button variant="soft" size="sm" icon={Plus} onClick={() => setCreateOpen(true)}>Nueva planificación</Button>}
       >
         <div className="scenario-grid">
           {scenarioSummaries.map(({ scenario: item, meta: itemMeta, score, errors, coverage, staff }) => (
@@ -479,7 +441,7 @@ export default function Dashboard() {
                     className="icon-btn danger"
                     title="Eliminar"
                     onClick={() => {
-                      if (window.confirm(`¿Eliminar el escenario "${item.name}"?`)) deleteScenario(item.id);
+                      if (window.confirm(`¿Eliminar la planificación "${item.name}"?`)) deleteScenario(item.id);
                     }}
                   >
                     <Trash2 size={15} />
@@ -509,7 +471,7 @@ export default function Dashboard() {
                   onClick={() => selectScenario(item.id)}
                   disabled={item.id === activeScenarioId}
                 >
-                  {item.id === activeScenarioId ? 'En uso' : 'Abrir escenario'}
+                  {item.id === activeScenarioId ? 'En uso' : 'Abrir planificación'}
                 </button>
                 <span>{item.days} días</span>
               </div>
@@ -518,8 +480,8 @@ export default function Dashboard() {
 
           <button type="button" className="scenario-add-card" onClick={() => setCreateOpen(true)}>
             <span className="scenario-add-icon"><Plus size={22} /></span>
-            <strong>Crear escenario</strong>
-            <span>Seguridad, salud, minería, retail o logística</span>
+            <strong>Crear planificación</strong>
+            <span>Un nuevo período, con tu personal y tus turnos</span>
           </button>
         </div>
       </Card>

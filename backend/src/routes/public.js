@@ -71,6 +71,8 @@ function publicUser(user) {
     cliente_nombre: null,
     empresa_nombre: user.empresa_nombre || null,
     empresa_estado: user.empresa_estado || null,
+    empresa_sector: user.empresa_sector || null,
+    empresa_logo: null,
     prueba_fin: user.prueba_fin || null,
     plan_nombre: user.plan_nombre || null,
     debe_cambiar_clave: false,
@@ -216,6 +218,7 @@ router.post('/registro', rateLimits.registro, async (req, res) => {
       ...adminResult.rows[0],
       empresa_nombre: empresa.razon_social,
       empresa_estado: empresa.estado,
+      empresa_sector: empresa.sector,
       prueba_fin: empresa.prueba_fin,
       plan_nombre: plan ? plan.nombre : null,
     };

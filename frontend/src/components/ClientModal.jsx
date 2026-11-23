@@ -84,7 +84,7 @@ export function ClientModal({ open, onClose, onCreated }) {
           <ShieldCheck size={17} />
           <div>
             <strong>Aislamiento por cuenta</strong>
-            <span>Los escenarios, la dotación y los horarios de este cliente no se compartirán con otros.</span>
+            <span>Las planificaciones, la dotación y los horarios de este cliente no se compartirán con otros.</span>
           </div>
         </div>
 

@@ -208,7 +208,7 @@ export function ExceptionModal({
       date,
       replacementId: findReplacement(date, absentId),
     });
-    // Solo se reinicia al abrir o cuando cambia el escenario activo.
+    // Solo se reinicia al abrir o cuando cambia la planificación activa.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTab, initialEmployeeId, initialDate, scenario?.id, schedule?.startDate, schedule?.days]);
 
@@ -341,7 +341,7 @@ export function ExceptionModal({
       {!schedule ? (
         <EmptyState
           icon={CalendarClock}
-          title="Este escenario no tiene horario"
+          title="Esta planificación no tiene horario"
           description="Genera el horario antes de registrar novedades."
         />
       ) : (

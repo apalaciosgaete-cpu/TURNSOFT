@@ -4,9 +4,11 @@ const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const {
   requireOperator,
+  requireUserManager,
   assertEmpresaAccess,
   scopedEmpresaId,
 } = require('../middleware/tenant');
+const { validarLogo } = require('../utils/logo');
 
 const LEGAL_FIELDS = [
   'jornada_maxima_semanal',
@@ -36,7 +38,7 @@ router.get('/', authenticateToken, async (req, res) => {
               e.autorizacion_excepcional, e.referencia_autorizacion, e.notas,
               e.jornada_maxima_semanal, e.descanso_minimo_entre_turnos,
               e.horas_extras_max_diarias, e.recargo_dominical_festivo,
-              e.email_contacto, e.telefono, e.direccion, e.ciudad,
+              e.email_contacto, e.telefono, e.direccion, e.ciudad, e.logo,
               e.estado, e.plan_id, e.prueba_inicio, e.prueba_fin,
               e.creado_en, e.actualizado_en,
               p.nombre AS plan_nombre, p.precio_mensual
@@ -122,6 +124,46 @@ router.patch('/:id', authenticateToken, requireOperator, async (req, res) => {
     }
     console.error('[empresas/patch]', error);
     return res.status(500).json({ error: 'No se pudieron guardar los datos de la empresa.' });
+  }
+});
+
+// Logo de la empresa: lo cambian el acceso de la empresa y los administradores.
+router.put('/:id/logo', authenticateToken, requireUserManager, async (req, res) => {
+  try {
+    assertEmpresaAccess(req.user, req.params.id);
+    const { value, error } = validarLogo(req.body && req.body.imagen);
+    if (error) return res.status(400).json({ error });
+
+    const result = await pool.query(
+      'UPDATE empresas SET logo = $1, actualizado_en = NOW() WHERE id = $2 RETURNING id',
+      [value, req.params.id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'Empresa no encontrada.' });
+    }
+    return res.json({ logo: value });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    console.error('[empresas/logo]', error);
+    return res.status(500).json({ error: 'No se pudo guardar el logo.' });
+  }
+});
+
+router.delete('/:id/logo', authenticateToken, requireUserManager, async (req, res) => {
+  try {
+    assertEmpresaAccess(req.user, req.params.id);
+    const result = await pool.query(
+      'UPDATE empresas SET logo = NULL, actualizado_en = NOW() WHERE id = $1 RETURNING id',
+      [req.params.id]
+    );
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'Empresa no encontrada.' });
+    }
+    return res.json({ logo: null });
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    console.error('[empresas/logo]', error);
+    return res.status(500).json({ error: 'No se pudo quitar el logo.' });
   }
 });
 

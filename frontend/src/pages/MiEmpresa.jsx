@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   BadgeCheck,
@@ -6,11 +6,9 @@ import {
   CalendarClock,
   Clock3,
   CreditCard,
-  Mail,
+  ImagePlus,
   Pencil,
-  Phone,
   Plus,
-  Power,
   RefreshCw,
   Save,
   ShieldCheck,
@@ -19,12 +17,13 @@ import {
   Users,
 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
-import { todayISO, WEEKDAYS_SHORT } from '@shared/dates.js';
+import { WEEKDAYS_SHORT } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { useTurnsoft } from '../store/TurnsoftContext.jsx';
 import { dateLabel, money, trialDaysLeft } from '../lib/format.js';
+import { EMAIL_RE, RUT_RE, normalizeRut, timeInput } from '../lib/forms.js';
+import { CompanyMark, useCompanyLogo } from '../components/CompanyMark.jsx';
 import {
-  Avatar,
   Badge,
   Button,
   Card,
@@ -37,8 +36,6 @@ import {
 
 const SECTORES = Object.values(SECTOR_META);
 const COLORS = ['#0f766e', '#0284c7', '#7c3aed', '#db2777', '#b45309', '#059669', '#dc2626', '#475569'];
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const RUT_RE = /^\d{6,8}-[0-9kK]$/;
 
 const EMPTY_EMPRESA = {
   razon_social: '',
@@ -49,17 +46,6 @@ const EMPTY_EMPRESA = {
   direccion: '',
   ciudad: '',
   notas: '',
-};
-
-const EMPTY_GUARDIA = {
-  nombre_completo: '',
-  rut: '',
-  cargo: '',
-  email: '',
-  telefono: '',
-  fecha_contrato: todayISO(),
-  horas_semanales_max: 42,
-  activo: true,
 };
 
 const EMPTY_PLANTILLA = {
@@ -74,18 +60,6 @@ const EMPTY_PLANTILLA = {
   cobertura_semanal: [1, 1, 1, 1, 1, 0, 0],
   certificaciones: '',
 };
-
-function normalizeRut(value) {
-  return String(value || '').replace(/\./g, '').replace(/\s/g, '').toUpperCase();
-}
-
-function dateInput(value) {
-  return value ? String(value).slice(0, 10) : '';
-}
-
-function timeInput(value) {
-  return value ? String(value).slice(0, 5) : '';
-}
 
 function durationFromTimes(start, end) {
   const [startHour, startMinute] = String(start || '').split(':').map(Number);
@@ -124,19 +98,6 @@ function toEmpresaForm(empresa) {
   };
 }
 
-function toGuardiaForm(guardia) {
-  return {
-    nombre_completo: guardia.nombre_completo || '',
-    rut: guardia.rut || '',
-    cargo: guardia.cargo || '',
-    email: guardia.email || '',
-    telefono: guardia.telefono || '',
-    fecha_contrato: dateInput(guardia.fecha_contrato) || todayISO(),
-    horas_semanales_max: Number(guardia.horas_semanales_max) || 42,
-    activo: guardia.activo !== false,
-  };
-}
-
 function toPlantillaForm(plantilla) {
   return {
     nombre: plantilla.nombre || '',
@@ -157,22 +118,17 @@ function toPlantillaForm(plantilla) {
 }
 
 export default function MiEmpresa() {
-  const { token, readOnly } = useAuth();
+  const { token, readOnly, session } = useAuth();
+  const companyLogo = useCompanyLogo();
   const { notify } = useTurnsoft();
 
   const [empresa, setEmpresa] = useState(null);
   const [form, setForm] = useState(EMPTY_EMPRESA);
-  const [guardias, setGuardias] = useState([]);
   const [plantillas, setPlantillas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
-
-  const [guardiaEditor, setGuardiaEditor] = useState(null);
-  const [guardiaForm, setGuardiaForm] = useState(EMPTY_GUARDIA);
-  const [guardiaError, setGuardiaError] = useState('');
-  const [savingGuardia, setSavingGuardia] = useState(false);
 
   const [plantillaEditor, setPlantillaEditor] = useState(null);
   const [plantillaForm, setPlantillaForm] = useState(EMPTY_PLANTILLA);
@@ -184,9 +140,8 @@ export default function MiEmpresa() {
     setLoading(true);
     setLoadError('');
     try {
-      const [empresas, listaGuardias, listaPlantillas] = await Promise.all([
+      const [empresas, listaPlantillas] = await Promise.all([
         apiRequest('/empresas', { token }),
-        apiRequest('/guardias', { token }),
         apiRequest('/turno-plantillas', { token }),
       ]);
       const actual = Array.isArray(empresas) ? empresas[0] : empresas;
@@ -195,7 +150,6 @@ export default function MiEmpresa() {
       }
       setEmpresa(actual);
       setForm(toEmpresaForm(actual));
-      setGuardias(Array.isArray(listaGuardias) ? listaGuardias : []);
       setPlantillas(Array.isArray(listaPlantillas) ? listaPlantillas : []);
     } catch (error) {
       setLoadError(error.message);
@@ -209,10 +163,6 @@ export default function MiEmpresa() {
   }, [cargar]);
 
   const diasPrueba = trialDaysLeft(empresa?.prueba_fin);
-  const activos = useMemo(
-    () => guardias.filter((guardia) => guardia.activo !== false).length,
-    [guardias]
-  );
 
   const set = (key, value) => {
     setFormError('');
@@ -256,103 +206,6 @@ export default function MiEmpresa() {
       } finally {
         setSaving(false);
       }
-    }
-  };
-
-  const abrirGuardiaNuevo = () => {
-    setGuardiaForm({ ...EMPTY_GUARDIA, fecha_contrato: todayISO() });
-    setGuardiaEditor('new');
-    setGuardiaError('');
-  };
-
-  const abrirGuardiaEditar = (guardia) => {
-    setGuardiaForm(toGuardiaForm(guardia));
-    setGuardiaEditor(guardia);
-    setGuardiaError('');
-  };
-
-  const guardarGuardia = async (event) => {
-    event.preventDefault();
-    setGuardiaError('');
-    const rut = normalizeRut(guardiaForm.rut);
-    const horas = Number(guardiaForm.horas_semanales_max);
-
-    if (!guardiaForm.nombre_completo.trim()) {
-      return setGuardiaError('Ingresa el nombre completo del trabajador.');
-    }
-    if (!RUT_RE.test(rut)) {
-      return setGuardiaError('Ingresa un RUT válido, por ejemplo 18.123.456-7.');
-    }
-    if (!Number.isFinite(horas) || horas < 1 || horas > 60) {
-      return setGuardiaError('La jornada semanal debe estar entre 1 y 60 horas.');
-    }
-    if (guardiaForm.email && !EMAIL_RE.test(guardiaForm.email.trim())) {
-      return setGuardiaError('Ingresa un correo válido o déjalo vacío.');
-    }
-
-    const payload = {
-      nombre_completo: guardiaForm.nombre_completo.trim(),
-      rut,
-      cargo: guardiaForm.cargo.trim() || null,
-      email: guardiaForm.email.trim() || null,
-      telefono: guardiaForm.telefono.trim() || null,
-      fecha_contrato: guardiaForm.fecha_contrato || null,
-      horas_semanales_max: Math.round(horas),
-      activo: Boolean(guardiaForm.activo),
-    };
-
-    setSavingGuardia(true);
-    try {
-      if (guardiaEditor === 'new') {
-        await apiRequest('/guardias', { method: 'POST', token, body: payload });
-        notify('Trabajador agregado a la base de la empresa.');
-      } else {
-        await apiRequest(`/guardias/${guardiaEditor.id}`, {
-          method: 'PUT',
-          token,
-          body: payload,
-        });
-        notify('Trabajador actualizado.');
-      }
-      setGuardiaEditor(null);
-      await cargar();
-    } catch (error) {
-      setGuardiaError(error.message);
-    } finally {
-      setSavingGuardia(false);
-    }
-  };
-
-  const alternarGuardia = async (guardia) => {
-    try {
-      await apiRequest(`/guardias/${guardia.id}`, {
-        method: 'PUT',
-        token,
-        body: {
-          nombre_completo: guardia.nombre_completo,
-          rut: guardia.rut,
-          cargo: guardia.cargo,
-          email: guardia.email,
-          telefono: guardia.telefono,
-          fecha_contrato: dateInput(guardia.fecha_contrato) || null,
-          horas_semanales_max: guardia.horas_semanales_max,
-          activo: guardia.activo === false,
-        },
-      });
-      await cargar();
-    } catch (error) {
-      notify(error.message, 'error');
-    }
-  };
-
-  const eliminarGuardia = async (guardia) => {
-    if (!window.confirm(`¿Eliminar a ${guardia.nombre_completo} de la base de trabajadores?`)) return;
-    try {
-      await apiRequest(`/guardias/${guardia.id}`, { method: 'DELETE', token });
-      notify('Trabajador eliminado de la base.', 'info');
-      await cargar();
-    } catch (error) {
-      notify(error.message, 'error');
     }
   };
 
@@ -517,12 +370,6 @@ export default function MiEmpresa() {
           tone={estadoTone(empresa.estado)}
         />
         <Stat
-          label="Base de trabajadores"
-          value={guardias.length}
-          hint={`${activos} activos · se importan al escenario`}
-          icon={Users}
-        />
-        <Stat
           label="Horarios base"
           value={plantillas.length}
           hint="Entrada, salida y colación por turno"
@@ -546,6 +393,43 @@ export default function MiEmpresa() {
           </Badge>
         </div>
       ) : null}
+
+      <Card
+        title="Identidad de la empresa"
+        subtitle="Tu logo aparece en el menú lateral para todo tu equipo."
+      >
+        <div className="company-identity">
+          <CompanyMark name={empresa.razon_social} logo={session?.empresaLogo} size={84} />
+          <div className="company-identity-copy">
+            <strong>{empresa.razon_social}</strong>
+            <span>
+              {companyLogo.hasLogo
+                ? 'Logo cargado. Puedes cambiarlo o quitarlo cuando quieras.'
+                : 'Aún no subes un logo. Mientras tanto se muestran las iniciales de tu empresa.'}
+            </span>
+            {companyLogo.canEdit ? (
+              <div className="company-identity-actions">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  icon={ImagePlus}
+                  onClick={companyLogo.pick}
+                  disabled={companyLogo.busy}
+                >
+                  {companyLogo.busy ? 'Subiendo…' : companyLogo.hasLogo ? 'Cambiar logo' : 'Subir logo'}
+                </Button>
+                {companyLogo.hasLogo ? (
+                  <Button size="sm" variant="ghost" icon={Trash2} onClick={companyLogo.remove} disabled={companyLogo.busy}>
+                    Quitar
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+            <small>PNG, JPG o WebP. Se ajusta solo a un tamaño liviano; un logo cuadrado o con fondo transparente se ve mejor.</small>
+          </div>
+          {companyLogo.input}
+        </div>
+      </Card>
 
       <Card
         title="Datos de la empresa"
@@ -642,113 +526,8 @@ export default function MiEmpresa() {
       </Card>
 
       <Card
-        title="Base de trabajadores"
-        subtitle="Carga tu dotación una vez y luego impórtala al escenario de horarios que estés planificando."
-        actions={
-          <div className="card-actions-row">
-            <Badge tone="neutral">{activos} activos de {guardias.length}</Badge>
-            <Button size="sm" icon={Plus} onClick={abrirGuardiaNuevo} hidden={readOnly}>Agregar trabajador</Button>
-          </div>
-        }
-        noPadding
-      >
-        {guardias.length ? (
-          <div className="table-wrap">
-            <table className="data-table company-table">
-              <thead>
-                <tr>
-                  <th>Trabajador</th>
-                  <th>RUT</th>
-                  <th>Contacto</th>
-                  <th>Contrato</th>
-                  <th>Estado</th>
-                  <th className="actions-col">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {guardias.map((guardia, index) => (
-                  <tr key={guardia.id} className={guardia.activo === false ? 'row-muted' : ''}>
-                    <td>
-                      <div className="person-cell">
-                        <Avatar
-                          name={guardia.nombre_completo}
-                          color={guardia.color || ['#0f766e', '#0284c7', '#7c3aed', '#db2777'][index % 4]}
-                          size={34}
-                        />
-                        <div>
-                          <strong>{guardia.nombre_completo}</strong>
-                          <span>{guardia.cargo || 'Sin cargo definido'}</span>
-                          {guardia.numero_certificado ? (
-                            <span className="cell-sub">OS-10 · {guardia.numero_certificado}</span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </td>
-                    <td>{guardia.rut}</td>
-                    <td>
-                      <div className="company-contact-cell">
-                        {guardia.email ? <span><Mail size={13} /> {guardia.email}</span> : null}
-                        {guardia.telefono ? <span><Phone size={13} /> {guardia.telefono}</span> : null}
-                        {!guardia.email && !guardia.telefono ? <span className="muted">Sin contacto</span> : null}
-                      </div>
-                    </td>
-                    <td>
-                      <strong>{guardia.horas_semanales_max || 42} h</strong>
-                      <div className="cell-sub">
-                        {guardia.fecha_contrato ? `Desde ${dateLabel(guardia.fecha_contrato)}` : 'Sin fecha'}
-                      </div>
-                    </td>
-                    <td>
-                      <Badge tone={guardia.activo === false ? 'neutral' : 'ok'} dot>
-                        {guardia.activo === false ? 'Inactivo' : 'Activo'}
-                      </Badge>
-                    </td>
-                    <td className="actions-col">
-                      <div className="row-actions" hidden={readOnly}>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          title="Editar trabajador"
-                          onClick={() => abrirGuardiaEditar(guardia)}
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn"
-                          title={guardia.activo === false ? 'Activar' : 'Desactivar'}
-                          onClick={() => alternarGuardia(guardia)}
-                        >
-                          <Power size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn danger"
-                          title="Eliminar trabajador"
-                          onClick={() => eliminarGuardia(guardia)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            icon={Users}
-            title="Tu base de trabajadores está vacía"
-            description="Agrega a las personas de tu empresa. Después podrás importarlas al escenario desde Personal."
-            action={readOnly ? null : <Button icon={Plus} onClick={abrirGuardiaNuevo}>Agregar primer trabajador</Button>}
-          />
-        )}
-      </Card>
-
-      <Card
         title="Horarios de entrada y salida"
-        subtitle="Define los turnos base de tu empresa. Luego los importas al escenario desde Turnos."
+        subtitle="Define los turnos base de tu empresa. Luego los traes a cada planificación desde Turnos."
         actions={
           <div className="card-actions-row">
             <Badge tone="neutral">{plantillas.length} horarios</Badge>
@@ -811,7 +590,7 @@ export default function MiEmpresa() {
           <EmptyState
             icon={Clock3}
             title="Aún no hay horarios base"
-            description="Crea tus turnos de entrada y salida para reutilizarlos en todos los escenarios de la empresa."
+            description="Crea tus turnos de entrada y salida para reutilizarlos en todas las planificaciones de la empresa."
             action={readOnly ? null : <Button icon={Plus} onClick={abrirPlantillaNueva}>Crear primer horario</Button>}
           />
         )}
@@ -821,8 +600,8 @@ export default function MiEmpresa() {
         <div className="company-note">
           <Users size={18} />
           <div>
-            <strong>Una base, muchos escenarios</strong>
-            <span>La dotación y los horarios se cargan una vez por empresa. Cada escenario decide qué importar.</span>
+            <strong>Una base, muchas planificaciones</strong>
+            <span>Los horarios base se cargan una vez por empresa. Cada planificación decide si los usa.</span>
           </div>
         </div>
         <div className="company-note">
@@ -836,97 +615,10 @@ export default function MiEmpresa() {
           <ShieldCheck size={18} />
           <div>
             <strong>Datos aislados</strong>
-            <span>Tu base de trabajadores y tus horarios solo son visibles para los usuarios de tu empresa.</span>
+            <span>Los datos de tu empresa y tus horarios solo son visibles para tus usuarios.</span>
           </div>
         </div>
       </div>
-
-      <Modal
-        open={Boolean(guardiaEditor)}
-        onClose={() => setGuardiaEditor(null)}
-        title={guardiaEditor === 'new' ? 'Agregar trabajador' : `Editar a ${guardiaEditor?.nombre_completo || ''}`}
-        subtitle="Estos datos forman la base de la empresa. Puedes importarlos al escenario desde Personal."
-        wide
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setGuardiaEditor(null)}>Cancelar</Button>
-            <Button icon={Save} onClick={guardarGuardia} disabled={savingGuardia}>
-              {savingGuardia ? 'Guardando…' : guardiaEditor === 'new' ? 'Agregar trabajador' : 'Guardar cambios'}
-            </Button>
-          </>
-        }
-      >
-        <form className="form-grid" onSubmit={guardarGuardia}>
-          <Field label="Nombre completo" className="field-full">
-            <input
-              className="input"
-              value={guardiaForm.nombre_completo}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, nombre_completo: event.target.value }))}
-              placeholder="Camila Rojas"
-            />
-          </Field>
-          <Field label="RUT">
-            <input
-              className="input"
-              value={guardiaForm.rut}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, rut: event.target.value }))}
-              placeholder="18.123.456-7"
-            />
-          </Field>
-          <Field label="Cargo o rol">
-            <input
-              className="input"
-              value={guardiaForm.cargo}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, cargo: event.target.value }))}
-              placeholder="Guardia de seguridad"
-            />
-          </Field>
-          <Field label="Correo">
-            <input
-              className="input"
-              type="email"
-              value={guardiaForm.email}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, email: event.target.value }))}
-              placeholder="persona@empresa.cl"
-            />
-          </Field>
-          <Field label="Teléfono">
-            <input
-              className="input"
-              value={guardiaForm.telefono}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, telefono: event.target.value }))}
-              placeholder="+56 9 1234 5678"
-            />
-          </Field>
-          <Field label="Fecha de contrato">
-            <input
-              className="input"
-              type="date"
-              value={guardiaForm.fecha_contrato}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, fecha_contrato: event.target.value }))}
-            />
-          </Field>
-          <Field label="Jornada semanal (h)" hint="Horas de contrato, no necesariamente las horas planificadas.">
-            <input
-              className="input"
-              type="number"
-              min="1"
-              max="60"
-              value={guardiaForm.horas_semanales_max}
-              onChange={(event) => setGuardiaForm((previous) => ({ ...previous, horas_semanales_max: event.target.value }))}
-            />
-          </Field>
-          <div className="field-full">
-            <Toggle
-              checked={guardiaForm.activo}
-              onChange={(checked) => setGuardiaForm((previous) => ({ ...previous, activo: checked }))}
-              label="Trabajador activo"
-              description="Solo los trabajadores activos se consideran al importar la base al escenario."
-            />
-          </div>
-          {guardiaError ? <div className="form-error field-full">{guardiaError}</div> : null}
-        </form>
-      </Modal>
 
       <Modal
         open={Boolean(plantillaEditor)}

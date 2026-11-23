@@ -16,6 +16,7 @@ import Reports from './pages/Reports.jsx';
 import Clients from './pages/Clients.jsx';
 import Support from './pages/Support.jsx';
 import MiEmpresa from './pages/MiEmpresa.jsx';
+import Trabajadores from './pages/Trabajadores.jsx';
 import Usuarios from './pages/Usuarios.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import Landing from './pages/Landing.jsx';
@@ -89,7 +90,9 @@ export default function App() {
         <Route path="legal" element={<Legal />} />
         <Route path="clientes" element={<Clients />} />
         <Route path="registro" element={<Navigate to="/" replace />} />
+        <Route path="ingresar" element={<Navigate to="/" replace />} />
         {isOperator ? <Route path="empresa" element={<MiEmpresa />} /> : null}
+        {isOperator ? <Route path="trabajadores" element={<Trabajadores />} /> : null}
         {canManageUsers ? <Route path="usuarios" element={<Usuarios />} /> : null}
         <Route path="soporte" element={<Support />} />
         <Route path="*" element={<NotFound />} />
