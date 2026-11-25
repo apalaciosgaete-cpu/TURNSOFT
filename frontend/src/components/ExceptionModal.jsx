@@ -15,7 +15,7 @@ import {
   getExceptions,
   sortExceptions,
 } from '@shared/exceptions.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { Badge, Button, EmptyState, Field, Modal } from './ui.jsx';
 
 const TABS = [
@@ -55,7 +55,7 @@ export function ExceptionModal({
     swapRestDay,
     coverAbsence,
     removeException,
-  } = useTurnsoft();
+  } = useSafeturn();
 
   const [tab, setTab] = useState(initialTab);
   const [error, setError] = useState('');

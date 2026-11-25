@@ -303,7 +303,7 @@ router.post('/generar', authenticateToken, denyValidador, async (req, res) => {
     }
 
     res.json({
-      message: 'Horario generado y validado con el motor TURNSOFT.',
+      message: 'Horario generado y validado con el motor SAFETURN.',
       scenario: result.scenario,
       schedule: result.schedule,
       validation: result.validation,

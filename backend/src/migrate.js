@@ -1,5 +1,5 @@
 /**
- * Ejecutor de migraciones de TURNSOFT.
+ * Ejecutor de migraciones de SAFETURN.
  *
  * Uso:
  *   npm run migrate                # aplica solo las migraciones que faltan

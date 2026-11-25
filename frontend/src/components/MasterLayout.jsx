@@ -78,7 +78,7 @@ export function MasterLayout() {
         <div className="sidebar-brand">
           <BrandMark size={42} className="brand-mark" />
           <div className="brand-copy">
-            <strong>TURNSOFT</strong>
+            <strong>SAFETURN</strong>
             <span>Turnos para Chile</span>
           </div>
           <button
@@ -223,7 +223,7 @@ export function MasterLayout() {
 
         <footer className="app-footer">
           <span>
-            TURNSOFT · {new Date().getFullYear()} · Supervisión de ocupación, pagos y soporte
+            SAFETURN · {new Date().getFullYear()} · Supervisión de ocupación, pagos y soporte
           </span>
           <span>Alta pública de empresas · prueba de 15 días</span>
         </footer>

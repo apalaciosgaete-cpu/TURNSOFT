@@ -19,7 +19,7 @@ import {
 import { SECTOR_META } from '@shared/legal.js';
 import { WEEKDAYS_SHORT } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { dateLabel, money, trialDaysLeft } from '../lib/format.js';
 import { EMAIL_RE, RUT_RE, normalizeRut, timeInput } from '../lib/forms.js';
 import { CompanyMark, useCompanyLogo } from '../components/CompanyMark.jsx';
@@ -120,7 +120,7 @@ function toPlantillaForm(plantilla) {
 export default function MiEmpresa() {
   const { token, readOnly, session } = useAuth();
   const companyLogo = useCompanyLogo();
-  const { notify } = useTurnsoft();
+  const { notify } = useSafeturn();
 
   const [empresa, setEmpresa] = useState(null);
   const [form, setForm] = useState(EMPTY_EMPRESA);
@@ -364,7 +364,7 @@ export default function MiEmpresa() {
               ? `${diasPrueba ?? 0} días restantes · termina ${dateLabel(empresa.prueba_fin)}`
               : empresa.estado === 'activa'
                 ? 'Acceso habilitado para toda la empresa'
-                : 'Contacta a TURNSOFT para regularizar'
+                : 'Contacta a SAFETURN para regularizar'
           }
           icon={ShieldCheck}
           tone={estadoTone(empresa.estado)}
@@ -384,7 +384,7 @@ export default function MiEmpresa() {
             <strong>Prueba de 15 días en curso</strong>
             <p>
               Quedan <strong>{diasPrueba ?? 0} días</strong> y tu prueba termina el{' '}
-              {dateLabel(empresa.prueba_fin)}. Cuando TURNSOFT verifique tu pago, la empresa
+              {dateLabel(empresa.prueba_fin)}. Cuando SAFETURN verifique tu pago, la empresa
               pasa a activa automáticamente.
             </p>
           </div>
@@ -433,7 +433,7 @@ export default function MiEmpresa() {
 
       <Card
         title="Datos de la empresa"
-        subtitle="Esta información identifica a tu empresa dentro de TURNSOFT y se usa en la operación."
+        subtitle="Esta información identifica a tu empresa dentro de SAFETURN y se usa en la operación."
         actions={
           <Badge tone={estadoTone(empresa.estado)} dot>
             {estadoLabel(empresa.estado)}

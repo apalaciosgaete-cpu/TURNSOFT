@@ -22,7 +22,7 @@ import { getHolidayMap } from '@shared/holidays.js';
 import { getTotalRequiredSlots } from '@shared/model.js';
 import { eachDate, formatDateShort, formatRange, weekdayISO, WEEKDAYS_SHORT } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import {
   Avatar,
   Badge,
@@ -110,8 +110,8 @@ function StartHome() {
             {readOnly
               ? 'Cuando el administrador cree la primera planificación y genere el horario, podrás revisarlo y aprobarlo desde aquí.'
               : needsWorkers
-                ? 'Primero registra a tu personal. Luego defines el período que quieres programar y TURNSOFT propone los turnos respetando la ley; tú ajustas lo que necesites.'
-                : 'Define el período que quieres programar, por ejemplo un mes. TURNSOFT propone los turnos respetando la ley y tú ajustas lo que necesites.'}
+                ? 'Primero registra a tu personal. Luego defines el período que quieres programar y SAFETURN propone los turnos respetando la ley; tú ajustas lo que necesites.'
+                : 'Define el período que quieres programar, por ejemplo un mes. SAFETURN propone los turnos respetando la ley y tú ajustas lo que necesites.'}
           </p>
           {readOnly ? null : (
             <div className="start-actions">
@@ -208,7 +208,7 @@ export default function Dashboard() {
     duplicateScenario,
     deleteScenario,
     validationFor,
-  } = useTurnsoft();
+  } = useSafeturn();
   const [editing, setEditing] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
 

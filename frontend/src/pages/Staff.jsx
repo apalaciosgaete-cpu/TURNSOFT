@@ -4,7 +4,7 @@ import { SECTOR_META } from '@shared/legal.js';
 import { addDays, diffDays, formatDateShort } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { activeGuardias, guardiaToEmployee, workerKey } from '../lib/baseImport.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import {
   Avatar,
   Badge,
@@ -40,7 +40,7 @@ function emptyEmployee(scenario) {
 }
 
 export default function Staff() {
-  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee, notify, readOnly } = useTurnsoft();
+  const { activeScenario: scenario, addEmployee, updateEmployee, removeEmployee, notify, readOnly } = useSafeturn();
   const { token } = useAuth();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState(null);

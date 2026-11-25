@@ -11,7 +11,7 @@ import {
 import { getAllowedDailyHours } from '@shared/model.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { plantillaToShift, shiftKey } from '../lib/baseImport.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import {
   Badge,
   Button,
@@ -40,7 +40,7 @@ function emptyShift() {
 }
 
 export default function Shifts() {
-  const { activeScenario: scenario, addShift, updateShift, removeShift, notify, readOnly } = useTurnsoft();
+  const { activeScenario: scenario, addShift, updateShift, removeShift, notify, readOnly } = useSafeturn();
   const { token } = useAuth();
   const [editor, setEditor] = useState(null);
   const [form, setForm] = useState(emptyShift);

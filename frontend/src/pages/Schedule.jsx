@@ -26,7 +26,7 @@ import {
   WEEKDAYS_SHORT,
 } from '@shared/dates.js';
 import { formatSlotValue, getExceptions } from '@shared/exceptions.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { downloadFile, csvLines } from '../lib/download.js';
 import { Avatar, Badge, Button, Card, EmptyState, Progress } from '../components/ui.jsx';
 import { ExceptionModal } from '../components/ExceptionModal.jsx';
@@ -42,7 +42,7 @@ export default function Schedule() {
     notify,
     isStale,
     readOnly,
-  } = useTurnsoft();
+  } = useSafeturn();
   const [query, setQuery] = useState('');
   const [novedad, setNovedad] = useState({
     open: false,
@@ -139,10 +139,10 @@ export default function Schedule() {
 
   const exportJson = () => {
     downloadFile(
-      `turnsoft-${scenario.sector}-${scenario.startDate}.json`,
+      `safeturn-${scenario.sector}-${scenario.startDate}.json`,
       JSON.stringify(
         {
-          app: 'TURNSOFT',
+          app: 'SAFETURN',
           exportedAt: new Date().toISOString(),
           scenario,
           validationSummary: validation?.metrics || null,
@@ -181,7 +181,7 @@ export default function Schedule() {
       }
     }
     downloadFile(
-      `turnsoft-horario-${scenario.sector}-${scenario.startDate}.csv`,
+      `safeturn-horario-${scenario.sector}-${scenario.startDate}.csv`,
       `\uFEFF${csvLines(rows)}`,
       'text/csv;charset=utf-8'
     );

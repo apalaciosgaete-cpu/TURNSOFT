@@ -1,4 +1,4 @@
-# TURNSOFT · Especificación de la API
+# SAFETURN · Especificación de la API
 
 Base URL: `http://localhost:3000/api`
 
@@ -152,7 +152,7 @@ Respuesta:
       }
     },
     "meta": {
-      "engine": "turnsoft-v2",
+      "engine": "safeturn-v2",
       "strategy": "patron-semanal",
       "attempts": 1,
       "fingerprint": "abc123",
@@ -375,7 +375,7 @@ Respuesta (resumida):
 
 ```json
 {
-  "message": "Horario generado y validado con el motor TURNSOFT.",
+  "message": "Horario generado y validado con el motor SAFETURN.",
   "scenario": { "...": "escenario con clientId y clienteId" },
   "schedule": { "...": "horario" },
   "validation": { "...": "reporte" },
@@ -606,8 +606,8 @@ El reporte incluye `empresa_id` y `cliente_id` efectivos en la respuesta y solo 
 ```json
 {
   "status": "ok",
-  "service": "TURNSOFT Backend",
-  "engine": "turnsoft-v2",
+  "service": "SAFETURN Backend",
+  "engine": "safeturn-v2",
   "sectors": ["seguridad", "salud", "mineria", "retail", "logistica"],
   "timestamp": "2026-11-06T04:00:00.000Z"
 }

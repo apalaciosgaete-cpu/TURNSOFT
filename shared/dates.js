@@ -1,5 +1,5 @@
 /**
- * Utilidades de fecha y turnos para TURNSOFT.
+ * Utilidades de fecha y turnos para SAFETURN.
  * Se usan fechas ISO (YYYY-MM-DD) y días ISO (1 = lunes ... 7 = domingo).
  */
 

@@ -19,7 +19,7 @@ import {
   formatRange,
   weekdayISO,
 } from '@shared/dates.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { csvLines, downloadFile } from '../lib/download.js';
 import {
   Badge,
@@ -45,7 +45,7 @@ export default function Reports() {
     activeValidation: validation,
     generate,
     busyScenarioId,
-  } = useTurnsoft();
+  } = useSafeturn();
   const [severity, setSeverity] = useState('all');
 
   const metrics = validation?.metrics;
@@ -80,10 +80,10 @@ export default function Reports() {
 
   const exportJson = () => {
     downloadFile(
-      `turnsoft-reporte-${scenario.sector}-${scenario.startDate}.json`,
+      `safeturn-reporte-${scenario.sector}-${scenario.startDate}.json`,
       JSON.stringify(
         {
-          app: 'TURNSOFT',
+          app: 'SAFETURN',
           exportedAt: new Date().toISOString(),
           scenario: {
             id: scenario.id,
@@ -107,7 +107,7 @@ export default function Reports() {
 
   const exportCsv = () => {
     const rows = [
-      ['TURNSOFT - Reporte de cumplimiento'],
+      ['SAFETURN - Reporte de cumplimiento'],
       ['Planificación', scenario.name],
       ['Empresa', scenario.company],
       ['Sector', meta.label],
@@ -156,7 +156,7 @@ export default function Reports() {
       ]),
     ];
     downloadFile(
-      `turnsoft-reporte-${scenario.sector}-${scenario.startDate}.csv`,
+      `safeturn-reporte-${scenario.sector}-${scenario.startDate}.csv`,
       `\uFEFF${csvLines(rows)}`,
       'text/csv;charset=utf-8'
     );

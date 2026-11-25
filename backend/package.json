@@ -1,7 +1,7 @@
 {
-  "name": "turnsoft-backend",
+  "name": "safeturn-backend",
   "version": "1.0.0",
-  "description": "TURNSOFT - Sistema generador de horarios para guardias de seguridad (Chile)",
+  "description": "SAFETURN - Sistema generador de horarios para guardias de seguridad (Chile)",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

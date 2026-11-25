@@ -1,14 +1,14 @@
 // Texto del tratamiento de datos que la empresa acepta en su primer ingreso.
 // Al cambiar el texto, sube la versión aquí y en backend/src/config/datos.js:
 // el servidor vuelve a pedir la aceptación.
-export const TRATAMIENTO_VERSION = '2026-11-16';
+export const TRATAMIENTO_VERSION = '2026-11-25';
 
 export const TRATAMIENTO_RESUMEN = [
   {
     id: 'roles',
     titulo: 'Quién es quién',
     texto:
-      'Tu empresa es la responsable de los datos de su personal. TURNSOFT es el encargado: los trata por cuenta tuya y solo según tus instrucciones.',
+      'Tu empresa es la responsable de los datos de su personal. SAFETURN es el encargado: los trata por cuenta tuya y solo según tus instrucciones.',
   },
   {
     id: 'datos',
@@ -26,7 +26,7 @@ export const TRATAMIENTO_RESUMEN = [
     id: 'derechos',
     titulo: 'Derechos de las personas',
     texto:
-      'Tu personal puede pedir acceso, rectificación, supresión, oposición, portabilidad y bloqueo. TURNSOFT te ayuda a responder.',
+      'Tu personal puede pedir acceso, rectificación, supresión, oposición, portabilidad y bloqueo. SAFETURN te ayuda a responder.',
   },
   {
     id: 'seguridad',
@@ -46,12 +46,12 @@ export const TRATAMIENTO_CLAUSULAS = [
   {
     titulo: '1. Partes y roles',
     texto:
-      'La empresa que crea la cuenta (la «Empresa») es la responsable del tratamiento de los datos personales de sus trabajadores y de las personas que designe como usuarios. TURNSOFT actúa como encargado del tratamiento: procesa esos datos por cuenta de la Empresa y solo para prestar el servicio.',
+      'La empresa que crea la cuenta (la «Empresa») es la responsable del tratamiento de los datos personales de sus trabajadores y de las personas que designe como usuarios. SAFETURN actúa como encargado del tratamiento: procesa esos datos por cuenta de la Empresa y solo para prestar el servicio.',
   },
   {
     titulo: '2. Finalidad',
     texto:
-      'Los datos se tratan únicamente para elaborar, validar, aprobar y entregar horarios y turnos de trabajo, y para gestionar las solicitudes del personal. TURNSOFT no los usa para fines propios, publicidad ni perfilamiento, y no los vende ni cede a terceros.',
+      'Los datos se tratan únicamente para elaborar, validar, aprobar y entregar horarios y turnos de trabajo, y para gestionar las solicitudes del personal. SAFETURN no los usa para fines propios, publicidad ni perfilamiento, y no los vende ni cede a terceros.',
   },
   {
     titulo: '3. Datos tratados',
@@ -61,27 +61,27 @@ export const TRATAMIENTO_CLAUSULAS = [
   {
     titulo: '4. Base de licitud e información al personal',
     texto:
-      'La Empresa declara contar con una base legal para tratar los datos de su personal en TURNSOFT (por ejemplo, la ejecución del contrato de trabajo y el cumplimiento de obligaciones legales sobre jornada) y se obliga a informar a sus trabajadores de este tratamiento.',
+      'La Empresa declara contar con una base legal para tratar los datos de su personal en SAFETURN (por ejemplo, la ejecución del contrato de trabajo y el cumplimiento de obligaciones legales sobre jornada) y se obliga a informar a sus trabajadores de este tratamiento.',
   },
   {
     titulo: '5. Instrucciones y confidencialidad',
     texto:
-      'TURNSOFT trata los datos solo según las instrucciones de la Empresa y mantiene la confidencialidad de la información. Las cuentas de la Empresa (administradores y validadores) son su responsabilidad: debe entregar accesos solo a quienes los necesiten.',
+      'SAFETURN trata los datos solo según las instrucciones de la Empresa y mantiene la confidencialidad de la información. Las cuentas de la Empresa (administradores y validadores) son su responsabilidad: debe entregar accesos solo a quienes los necesiten.',
   },
   {
     titulo: '6. Seguridad',
     texto:
-      'TURNSOFT mantiene medidas técnicas y organizativas razonables: aislamiento de los datos de cada empresa, comunicaciones cifradas y control de acceso por rol. Ante una vulneración que afecte los datos de la Empresa, TURNSOFT la informará sin demora indebida para que pueda cumplir sus deberes de notificación.',
+      'SAFETURN mantiene medidas técnicas y organizativas razonables: aislamiento de los datos de cada empresa, comunicaciones cifradas y control de acceso por rol. Ante una vulneración que afecte los datos de la Empresa, SAFETURN la informará sin demora indebida para que pueda cumplir sus deberes de notificación.',
   },
   {
     titulo: '7. Derechos de las personas',
     texto:
-      'Los titulares de los datos pueden ejercer ante la Empresa sus derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo temporal. TURNSOFT colaborará con la Empresa para atender esas solicitudes dentro de los plazos legales.',
+      'Los titulares de los datos pueden ejercer ante la Empresa sus derechos de acceso, rectificación, supresión, oposición, portabilidad y bloqueo temporal. SAFETURN colaborará con la Empresa para atender esas solicitudes dentro de los plazos legales.',
   },
   {
     titulo: '8. Proveedores y transferencia',
     texto:
-      'TURNSOFT utiliza proveedores de infraestructura en la nube para alojar la base de datos y la aplicación, los cuales pueden operar fuera de Chile. La Empresa autoriza esta subcontratación.',
+      'SAFETURN utiliza proveedores de infraestructura en la nube para alojar la base de datos y la aplicación, los cuales pueden operar fuera de Chile. La Empresa autoriza esta subcontratación.',
   },
   {
     titulo: '9. Conservación y término',

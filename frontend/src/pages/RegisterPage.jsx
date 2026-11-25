@@ -76,7 +76,7 @@ export default function RegisterPage() {
         <div className="login-brand">
           <BrandMark size={44} className="login-brand-mark" />
           <div>
-            <strong>TURNSOFT</strong>
+            <strong>SAFETURN</strong>
             <span>Turnos para Chile</span>
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function RegisterPage() {
       <section className="login-panel register-panel">
         <form className="login-card register-card" onSubmit={submit}>
           <div>
-            <span className="login-card-eyebrow">Primera vez en TURNSOFT</span>
+            <span className="login-card-eyebrow">Primera vez en SAFETURN</span>
             <h2>Crea tu cuenta</h2>
           </div>
           <p className="login-card-sub">
@@ -223,7 +223,7 @@ export default function RegisterPage() {
           </button>
 
           <p className="login-coldstart">
-            Al crear la cuenta aceptas las condiciones de uso de TURNSOFT. Tus
+            Al crear la cuenta aceptas las condiciones de uso de SAFETURN. Tus
             datos quedan aislados de las demás empresas de la plataforma.
           </p>
         </form>

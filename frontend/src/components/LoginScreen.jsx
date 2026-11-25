@@ -97,7 +97,7 @@ export function LoginScreen() {
         <div className="login-brand">
           <BrandMark size={44} className="login-brand-mark" />
           <div>
-            <strong>TURNSOFT</strong>
+            <strong>SAFETURN</strong>
             <span>Turnos para Chile</span>
           </div>
         </div>
@@ -146,7 +146,7 @@ export function LoginScreen() {
       <section className="login-panel">
         {bootstrap.loading ? (
           <div className="login-card login-card-loading" aria-live="polite">
-            <span className="login-card-eyebrow">TURNSOFT</span>
+            <span className="login-card-eyebrow">SAFETURN</span>
             <h2>Verificando la instalación…</h2>
             <p className="login-card-sub">
               Estamos comprobando si ya existe la cuenta de supervisor maestro.
@@ -172,7 +172,7 @@ export function LoginScreen() {
                 <span className="login-section-icon"><UserRound size={16} /></span>
                 <div>
                   <strong>Cuenta maestra</strong>
-                  <small>Acceso total a la consola de TURNSOFT.</small>
+                  <small>Acceso total a la consola de SAFETURN.</small>
                 </div>
               </div>
 
@@ -209,7 +209,7 @@ export function LoginScreen() {
                   type="email"
                   value={form.email}
                   onChange={(event) => set('email', event.target.value)}
-                  placeholder="supervisor@turnsoft.cl"
+                  placeholder="correo@empresa.cl"
                   autoComplete="username"
                 />
               </label>
@@ -304,7 +304,7 @@ export function LoginScreen() {
             </label>
 
             <button type="submit" className="btn btn-primary btn-md login-submit" disabled={busy}>
-              <span>{busy ? 'Conectando con el servidor…' : 'Entrar a TURNSOFT'}</span>
+              <span>{busy ? 'Conectando con el servidor…' : 'Entrar a SAFETURN'}</span>
               <ArrowRight size={17} />
             </button>
 

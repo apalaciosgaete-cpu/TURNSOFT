@@ -640,7 +640,7 @@ export function generateSchedule(scenario, options = {}) {
 function finalize(best, scenario, dates, workers, holidayMap) {
   const evaluation = evaluateCells(best.cells, scenario, dates, workers, holidayMap);
   const meta = {
-    engine: 'turnsoft-v2',
+    engine: 'safeturn-v2',
     generatedAt: new Date().toISOString(),
     strategy: best.strategy,
     attempts: best.attempts,

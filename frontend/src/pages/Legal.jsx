@@ -137,10 +137,10 @@ export default function Legal() {
         </Card>
 
         <div className="legal-side">
-          <Card title="Alcance y límites" subtitle="Lo que TURNSOFT valida y lo que debes revisar aparte.">
+          <Card title="Alcance y límites" subtitle="Lo que SAFETURN valida y lo que debes revisar aparte.">
             <ul className="legal-notes">
               <li><strong>Turnos de 12 h:</strong> no son jornada ordinaria. Requieren régimen excepcional autorizado y cumplimiento del DS 48/2023.</li>
-              <li><strong>Descanso de 12 h:</strong> es un parámetro contractual/reglamentario de TURNSOFT; el Código del Trabajo no fija un mínimo general de 12 h entre jornadas.</li>
+              <li><strong>Descanso de 12 h:</strong> es un parámetro contractual/reglamentario de SAFETURN; el Código del Trabajo no fija un mínimo general de 12 h entre jornadas.</li>
               <li><strong>Recargo dominical:</strong> el 30% es referencia de comercio (art. 38). Otras actividades pueden tener un tratamiento distinto.</li>
               <li><strong>Domingos libres:</strong> la regla de 2 domingos al mes es propia del comercio; no es universal para seguridad o minería.</li>
               <li><strong>Feriados:</strong> se calculan para el período, pero debes verificar el calendario oficial y los feriados regionales aplicables.</li>
@@ -202,7 +202,7 @@ export default function Legal() {
       <div className="legal-strip">
         <BookOpen size={18} />
         <p>
-          <strong>Verificación oficial.</strong> Antes de publicar, contrasta el contrato de trabajo, el reglamento interno, el convenio colectivo, la resolución de la Dirección del Trabajo y el calendario oficial de feriados. TURNSOFT es una herramienta de apoyo y no constituye asesoría legal.
+          <strong>Verificación oficial.</strong> Antes de publicar, contrasta el contrato de trabajo, el reglamento interno, el convenio colectivo, la resolución de la Dirección del Trabajo y el calendario oficial de feriados. SAFETURN es una herramienta de apoyo y no constituye asesoría legal.
         </p>
       </div>
 

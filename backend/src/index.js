@@ -47,8 +47,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'TURNSOFT Backend',
-    engine: 'turnsoft-v2',
+    service: 'SAFETURN Backend',
+    engine: 'safeturn-v2',
     sectors: ['seguridad', 'salud', 'mineria', 'retail', 'logistica'],
     timestamp: new Date(),
   });
@@ -66,7 +66,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 TURNSOFT Backend corriendo en http://localhost:${PORT}`);
+  console.log(`🚀 SAFETURN Backend corriendo en http://localhost:${PORT}`);
 });
 
 module.exports = app;

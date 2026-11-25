@@ -8,7 +8,7 @@
  */
 
 const MIN_LENGTH = 32;
-const DEV_SECRET = 'turnsoft-solo-desarrollo-local-no-usar-en-produccion';
+const DEV_SECRET = 'safeturn-solo-desarrollo-local-no-usar-en-produccion';
 const LENIENT_ENVS = new Set(['development', 'test']);
 
 const KNOWN_PLACEHOLDERS = new Set([

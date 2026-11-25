@@ -33,7 +33,7 @@ import {
 import { SECTOR_META } from '@shared/legal.js';
 import { formatRange } from '@shared/dates.js';
 import { useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { trialDaysLeft } from '../lib/format.js';
 import { Badge, Button, EmptyState } from './ui.jsx';
 import { BrandMark } from './Brand.jsx';
@@ -45,14 +45,14 @@ const PAGE_META = {
   '/horario': { title: 'Horario', subtitle: 'Grilla editable por persona y día. Cada cambio se revalida al instante.' },
   '/personal': { title: 'Dotación', subtitle: 'Personas de esta planificación: contratos, disponibilidad y certificaciones.' },
   '/turnos': { title: 'Turnos', subtitle: 'Plantillas de turno, colación y cobertura por día de la semana.' },
-  '/reglas': { title: 'Reglas de jornada', subtitle: 'Parámetros con los que TURNSOFT genera y valida el horario.' },
+  '/reglas': { title: 'Reglas de jornada', subtitle: 'Parámetros con los que SAFETURN genera y valida el horario.' },
   '/reportes': { title: 'Reportes', subtitle: 'Métricas de cumplimiento, hallazgos y exportación.' },
   '/legal': { title: 'Base legal', subtitle: 'Fuentes, hitos de jornada y criterios aplicados en Chile.' },
   '/clientes': { title: 'Clientes', subtitle: 'Solo si prestas servicio a otras empresas: cada cliente tiene su operación aislada.' },
   '/usuarios': { title: 'Usuarios', subtitle: 'Asigna administradores y validadores de tu empresa.' },
   '/empresa': { title: 'Mi empresa', subtitle: 'Logo, datos de la empresa y horarios de entrada y salida.' },
   '/trabajadores': { title: 'Trabajadores', subtitle: 'Base de datos de trabajadores de tu empresa. Alimenta cada planificación.' },
-  '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con TURNSOFT.' },
+  '/soporte': { title: 'Soporte', subtitle: 'Tickets, planes y comunicación directa con SAFETURN.' },
 };
 
 // Páginas que dependen de la planificación activa.
@@ -71,7 +71,7 @@ export function Layout() {
     busyScenarioId,
     notice,
     dismissNotice,
-  } = useTurnsoft();
+  } = useSafeturn();
   const companyLogo = useCompanyLogo();
   const {
     session,
@@ -152,7 +152,7 @@ export function Layout() {
   }, [location.pathname]);
 
   const handleLogout = () => {
-    if (window.confirm('¿Cerrar sesión en TURNSOFT?')) {
+    if (window.confirm('¿Cerrar sesión en SAFETURN?')) {
       logout();
       navigate('/');
     }
@@ -170,7 +170,7 @@ export function Layout() {
         <div className="sidebar-brand">
           <BrandMark size={42} className="brand-mark" />
           <div className="brand-copy">
-            <strong>TURNSOFT</strong>
+            <strong>SAFETURN</strong>
             <span>Turnos para Chile</span>
           </div>
           <button type="button" className="sidebar-close" onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
@@ -437,7 +437,7 @@ export function Layout() {
         </main>
 
         <footer className="app-footer">
-          <span>TURNSOFT · {new Date().getFullYear()} · Herramienta de apoyo a la planificación, no constituye asesoría legal.</span>
+          <span>SAFETURN · {new Date().getFullYear()} · Herramienta de apoyo a la planificación, no constituye asesoría legal.</span>
           <span>Jornada ordinaria 42 h · próxima reducción 40 h el 26-04-2028</span>
         </footer>
       </div>

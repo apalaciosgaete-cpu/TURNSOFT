@@ -1,9 +1,9 @@
-export const APP_NAME = 'TURNSOFT';
+export const APP_NAME = 'SAFETURN';
 export const APP_TAGLINE = 'Turnos legales para Chile';
 export const LEGAL_VERSION = 'Noviembre 2026';
 
 export const DISCLAIMER =
-  'TURNSOFT es una herramienta de apoyo a la planificación. No constituye asesoría legal ni reemplaza la revisión de contratos, convenios colectivos, reglamentos internos o autorizaciones de la Dirección del Trabajo. Los regímenes excepcionales (turnos de 12 h, ciclos 4x4, 7x7 u otros) requieren autorización y deben cumplir los límites del DS 48/2023. La jornada ordinaria vigente desde el 26-04-2026 es de 42 horas semanales; desde el 26-04-2028 será de 40 horas.';
+  'SAFETURN es una herramienta de apoyo a la planificación. No constituye asesoría legal ni reemplaza la revisión de contratos, convenios colectivos, reglamentos internos o autorizaciones de la Dirección del Trabajo. Los regímenes excepcionales (turnos de 12 h, ciclos 4x4, 7x7 u otros) requieren autorización y deben cumplir los límites del DS 48/2023. La jornada ordinaria vigente desde el 26-04-2026 es de 42 horas semanales; desde el 26-04-2028 será de 40 horas.';
 
 export const WEEKLY_HOURS_MILESTONES = [
   { from: '2024-04-26', hours: 44, label: 'Ley 21.561 · primera reducción' },
@@ -41,7 +41,7 @@ export const LEGAL_SOURCES = [
     summary:
       'La ley redujo gradualmente la jornada ordinaria: 44 horas desde abril de 2024, 42 horas desde el 26 de abril de 2026 y 40 horas desde el 26 de abril de 2028.',
     relevance:
-      'TURNSOFT usa 42 horas como valor vigente por defecto y muestra el próximo hito. El parámetro es editable para contratos o convenios más favorables.',
+      'SAFETURN usa 42 horas como valor vigente por defecto y muestra el próximo hito. El parámetro es editable para contratos o convenios más favorables.',
     url: 'https://www.dt.gob.cl/legislacion/1624/w3-propertyvalue-188980.html',
     tags: ['jornada', 'vigencia'],
   },
@@ -53,7 +53,7 @@ export const LEGAL_SOURCES = [
     summary:
       'El máximo semanal no puede distribuirse en más de seis ni en menos de cinco días. En ningún caso la jornada ordinaria puede exceder de diez horas por día, sin perjuicio de las excepciones legales.',
     relevance:
-      'TURNSOFT valida el tope diario y los días trabajados por semana. Un turno de 12 horas no es ordinario: requiere un régimen excepcional autorizado.',
+      'SAFETURN valida el tope diario y los días trabajados por semana. Un turno de 12 horas no es ordinario: requiere un régimen excepcional autorizado.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-28/',
     tags: ['jornada diaria', 'días'],
   },
@@ -65,7 +65,7 @@ export const LEGAL_SOURCES = [
     summary:
       'La jornada se divide en dos partes, con al menos media hora de colación. Ese período no se considera trabajado para computar la duración de la jornada diaria.',
     relevance:
-      'TURNSOFT descuenta la colación configurada en cada plantilla para calcular las horas computables. Un turno de 9 horas con 1 hora de colación computa 8 horas.',
+      'SAFETURN descuenta la colación configurada en cada plantilla para calcular las horas computables. Un turno de 9 horas con 1 hora de colación computa 8 horas.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-34/',
     tags: ['colación', 'horas'],
   },
@@ -77,7 +77,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Los domingos y los días declarados festivos son de descanso, salvo respecto de las actividades autorizadas por ley para trabajar en esos días.',
     relevance:
-      'Determina si una actividad puede operar domingos y festivos. TURNSOFT permite configurarlo por planificación y alerta cuando se programa trabajo no autorizado.',
+      'Determina si una actividad puede operar domingos y festivos. SAFETURN permite configurarlo por planificación y alerta cuando se programa trabajo no autorizado.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-35/',
     tags: ['descanso', 'domingo'],
   },
@@ -101,7 +101,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Las empresas o faenas no exceptuadas no pueden distribuir la jornada ordinaria de modo que incluya domingo o festivo, salvo fuerza mayor o autorización en los casos legales.',
     relevance:
-      'TURNSOFT marca como error el trabajo dominical cuando la planificación no está habilitada para operar ese día.',
+      'SAFETURN marca como error el trabajo dominical cuando la planificación no está habilitada para operar ese día.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-37/',
     tags: ['domingo', 'excepciones'],
   },
@@ -113,7 +113,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Regula las actividades exceptuadas del descanso dominical, el descanso compensatorio, los domingos libres en comercio y el recargo mínimo de 30% por trabajo en domingo en los casos que indica la ley.',
     relevance:
-      'Configura los domingos libres y el recargo dominical. Para retail, TURNSOFT usa 30% como valor de referencia y lo deja parametrizable.',
+      'Configura los domingos libres y el recargo dominical. Para retail, SAFETURN usa 30% como valor de referencia y lo deja parametrizable.',
     url: 'https://www.elcriterio.cl/codigos/codigo-trabajo/articulo-38/',
     tags: ['domingo', 'retail', 'recargo'],
   },
@@ -125,7 +125,7 @@ export const LEGAL_SOURCES = [
     summary:
       'El reglamento determina límites y parámetros de distribución de los sistemas excepcionales de jornada y descanso, incluyendo promedios semanales y descansos adicionales.',
     relevance:
-      'Sostiene las planificaciones de seguridad y minería con turnos de 12 horas. TURNSOFT exige declarar la autorización y valida el promedio semanal sobre el ciclo.',
+      'Sostiene las planificaciones de seguridad y minería con turnos de 12 horas. SAFETURN exige declarar la autorización y valida el promedio semanal sobre el ciclo.',
     url: 'https://www.dt.gob.cl/legislacion/1624/w3-propertyvalue-190373.html',
     tags: ['excepcional', '12 horas', 'minería', 'seguridad'],
   },
@@ -161,7 +161,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Es una referencia tradicional para el sistema excepcional de guardias de seguridad, con jornadas de hasta 12 horas y ciclos de trabajo y descanso como 4x4 o 7x7, sujeto a autorización y normativa vigente.',
     relevance:
-      'Inspira el preset de seguridad, pero TURNSOFT no la aplica automáticamente: exige marcar la autorización y validar el promedio semanal.',
+      'Inspira el preset de seguridad, pero SAFETURN no la aplica automáticamente: exige marcar la autorización y validar el promedio semanal.',
     url: 'https://www.dt.gob.cl/legislacion/1624/w3-propertyvalue-136992.html',
     tags: ['seguridad', '12 horas', '4x4'],
   },
@@ -173,7 +173,7 @@ export const LEGAL_SOURCES = [
     summary:
       'La ley regula la actividad de seguridad privada y las exigencias de certificación y acreditación de las personas que cumplen funciones de vigilancia.',
     relevance:
-      'TURNSOFT permite asociar certificaciones con vencimiento a cada trabajador y bloquear turnos cuando la credencial exigida está vencida.',
+      'SAFETURN permite asociar certificaciones con vencimiento a cada trabajador y bloquear turnos cuando la credencial exigida está vencida.',
     url: 'https://www.bcn.cl/leychile/',
     tags: ['seguridad', 'certificación', 'OS-10'],
   },
@@ -185,7 +185,7 @@ export const LEGAL_SOURCES = [
     summary:
       'Calendario de feriados nacionales y regionales de Chile para 2026, incluyendo los irrenunciables y los trasladables.',
     relevance:
-      'TURNSOFT calcula feriados nacionales para el rango planificado y permite agregar feriados regionales o internos. Verifica siempre el calendario oficial del año.',
+      'SAFETURN calcula feriados nacionales para el rango planificado y permite agregar feriados regionales o internos. Verifica siempre el calendario oficial del año.',
     url: 'https://www.gob.cl/noticias/feriados-2026-revisa-cuantos-habra-y-cuales-son-irrenunciables/',
     tags: ['feriados', 'calendario'],
   },
@@ -206,7 +206,7 @@ export const RULE_CATALOG = [
     unit: 'h',
     group: 'Jornada',
     citation: 'Art. 28 CT',
-    help: 'La jornada ordinaria no puede exceder 10 horas diarias. TURNSOFT usa un valor más bajo si el preset sectorial lo define.',
+    help: 'La jornada ordinaria no puede exceder 10 horas diarias. SAFETURN usa un valor más bajo si el preset sectorial lo define.',
   },
   {
     id: 'maxDaysPerWeek',
@@ -230,7 +230,7 @@ export const RULE_CATALOG = [
     unit: 'días',
     group: 'Descansos',
     citation: 'DS 48/2023 · política interna',
-    help: 'Días de descanso que TURNSOFT intenta asegurar después de completar el bloque máximo. En 4x4 son 4; en 7x7 son 7; en 5x2 son 2.',
+    help: 'Días de descanso que SAFETURN intenta asegurar después de completar el bloque máximo. En 4x4 son 4; en 7x7 son 7; en 5x2 son 2.',
   },
   {
     id: 'minRestBetweenShifts',
@@ -238,7 +238,7 @@ export const RULE_CATALOG = [
     unit: 'h',
     group: 'Descansos',
     citation: 'Parámetro contractual/reglamentario',
-    help: 'TURNSOFT lo exige como política de seguridad, pero el Código del Trabajo no fija un mínimo general de 12 horas entre jornadas. Revisa contrato, convenio y DS 48.',
+    help: 'SAFETURN lo exige como política de seguridad, pero el Código del Trabajo no fija un mínimo general de 12 horas entre jornadas. Revisa contrato, convenio y DS 48.',
   },
   {
     id: 'minWeeklyRestHours',
@@ -270,7 +270,7 @@ export const RULE_CATALOG = [
     unit: '%',
     group: 'Domingo y festivos',
     citation: 'Contrato / normativa especial',
-    help: 'TURNSOFT solo estima el recargo configurado. Verifica el contrato, convenio colectivo y normativa sectorial aplicable.',
+    help: 'SAFETURN solo estima el recargo configurado. Verifica el contrato, convenio colectivo y normativa sectorial aplicable.',
   },
   {
     id: 'maxExceptionalAverageWeeklyHours',
@@ -286,7 +286,7 @@ export const RULE_CATALOG = [
     unit: 'h',
     group: 'Régimen excepcional',
     citation: 'DS 48/2023 · autorización DT',
-    help: 'TURNSOFT usa este tope solo cuando la planificación está marcada como excepcional y autorizado. No habilita por sí solo un turno de 12 horas.',
+    help: 'SAFETURN usa este tope solo cuando la planificación está marcada como excepcional y autorizado. No habilita por sí solo un turno de 12 horas.',
   },
   {
     id: 'maxConsecutiveNightShifts',

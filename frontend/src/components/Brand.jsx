@@ -13,7 +13,7 @@ export function BrandMark({ size = 42, className = '' }) {
       viewBox="0 0 64 64"
       className={className}
       role="img"
-      aria-label="TURNSOFT"
+      aria-label="SAFETURN"
     >
       <rect width="64" height="64" rx="16" fill={COLORS.deep} />
       <g fill={COLORS.tile}>

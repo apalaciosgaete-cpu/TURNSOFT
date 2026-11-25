@@ -228,7 +228,7 @@ export default function Usuarios() {
 
       <Card
         title="Usuarios de la empresa"
-        subtitle="Quienes administran y validan la operación. El personal no accede a TURNSOFT: recibe sus turnos de ti o de quien designes."
+        subtitle="Quienes administran y validan la operación. El personal no accede a SAFETURN: recibe sus turnos de ti o de quien designes."
         actions={
           <div className="card-actions-row">
             <Badge tone="neutral">
@@ -379,7 +379,7 @@ export default function Usuarios() {
             />
           </Field>
           {editor === 'new' ? (
-            <Field label="Correo de acceso" hint="Con este correo entrará a TURNSOFT.">
+            <Field label="Correo de acceso" hint="Con este correo entrará a SAFETURN.">
               <input
                 className="input"
                 type="email"
@@ -436,7 +436,7 @@ export default function Usuarios() {
               </div>
             </dl>
             <p className="users-credential-note">
-              Al ingresar por primera vez, TURNSOFT le pedirá crear su propia clave.
+              Al ingresar por primera vez, SAFETURN le pedirá crear su propia clave.
             </p>
           </div>
         ) : null}

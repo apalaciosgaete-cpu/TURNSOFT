@@ -89,14 +89,14 @@ router.get('/bootstrap', async (req, res) => {
   try {
     const stats = await userStats();
     res.json({
-      app: 'TURNSOFT',
+      app: 'SAFETURN',
       needsSetup: stats.superadmins === 0,
       userCount: stats.total,
     });
   } catch (error) {
     // Sin esquema o sin base, el frontend debe poder mostrar el login normal.
     if (error.code === '42P01') {
-      return res.json({ app: 'TURNSOFT', needsSetup: true, userCount: 0, schemaReady: false });
+      return res.json({ app: 'SAFETURN', needsSetup: true, userCount: 0, schemaReady: false });
     }
     console.error('[auth/bootstrap]', error);
     res.status(503).json({ error: 'No se pudo verificar el estado de la instalación.' });
@@ -153,7 +153,7 @@ router.post('/setup', rateLimits.setup, async (req, res) => {
 
     const fullUser = {
       ...user,
-      empresa_nombre: 'TURNSOFT',
+      empresa_nombre: 'SAFETURN',
       cliente_nombre: null,
     };
     return res.status(201).json({

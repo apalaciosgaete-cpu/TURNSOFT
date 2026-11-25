@@ -1,7 +1,7 @@
 import { createDemoScenarios, DEMO_START_DATE } from './demo.js';
 
 /**
- * Cuentas demo de TURNSOFT.
+ * Cuentas demo de SAFETURN.
  *
  * `Vigo Seguridad` es la empresa operadora. Cada cliente es una cuenta
  * independiente: sus usuarios solo pueden ver sus propios escenarios,

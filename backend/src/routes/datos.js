@@ -45,7 +45,7 @@ router.get('/tratamiento', authenticateAllowingPending, async (req, res) => {
   }
 });
 
-// La empresa (responsable) acepta el encargo de tratamiento de datos a TURNSOFT.
+// La empresa (responsable) acepta el encargo de tratamiento de datos a SAFETURN.
 router.post('/tratamiento/aceptar', authenticateAllowingPending, async (req, res) => {
   try {
     assertEmpresa(req.user);
