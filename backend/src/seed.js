@@ -1,5 +1,5 @@
 /**
- * Datos demo multi-tenant de TURNSOFT.
+ * Datos demo multi-tenant de SAFETURN.
  *
  * Crea la empresa operadora Vigo Seguridad, sus 8 clientes y una operación
  * completa por cliente (sucursal, puestos, dotación y usuario de acceso).
@@ -448,7 +448,7 @@ async function main() {
         OPERATOR.legalName || OPERATOR.name,
         OPERATOR.rut || '76.543.210-8',
         'Res. Ex. 1185/2006 · autorización DT (demo)',
-        'Empresa operadora demo TURNSOFT: administra servicios para ocho clientes con cuentas aisladas.',
+        'Empresa operadora demo SAFETURN: administra servicios para ocho clientes con cuentas aisladas.',
       ]
     );
     const empresaId = empresaResult.rows[0].id;

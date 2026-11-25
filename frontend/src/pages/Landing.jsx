@@ -54,7 +54,7 @@ const PREGUNTAS = [
   ['¿Puedo cambiar lo que propone el motor?', 'Sí. La propuesta es un punto de partida; tú decides el horario final y el sistema te avisa si algo incumple una regla.'],
   ['¿Qué pasa al terminar los 15 días de prueba?', 'La cuenta queda sin acceso hasta que elijas un plan. Tus datos se conservan.'],
   ['¿Cuánto cuesta?', 'Los planes se anunciarán antes del lanzamiento comercial. Hoy puedes probar la app sin costo.'],
-  ['¿Reemplaza la asesoría laboral?', 'No. TURNSOFT ayuda a planificar y detectar incumplimientos, pero la responsabilidad legal sigue siendo de la empresa.'],
+  ['¿Reemplaza la asesoría laboral?', 'No. SAFETURN ayuda a planificar y detectar incumplimientos, pero la responsabilidad legal sigue siendo de la empresa.'],
 ];
 
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -109,9 +109,9 @@ export default function Landing() {
     <div className="lp">
       <header className="lp-nav">
         <div className="lp-wrap lp-nav-in">
-          <Link to="/" className="lp-brand" aria-label="TURNSOFT, inicio">
+          <Link to="/" className="lp-brand" aria-label="SAFETURN, inicio">
             <BrandMark size={36} />
-            <span>TURNSOFT</span>
+            <span>SAFETURN</span>
           </Link>
           <nav className="lp-links" aria-label="Secciones">
             <a href="#como-funciona">Cómo funciona</a>
@@ -133,7 +133,7 @@ export default function Landing() {
               <span className="lp-eyebrow">Versión de prueba · Turnos para Chile</span>
               <h1>Arma tus turnos en minutos y cumple la normativa laboral chilena.</h1>
               <p>
-                TURNSOFT propone el horario, revisa jornada, descansos y feriados, y tú lo ajustas
+                SAFETURN propone el horario, revisa jornada, descansos y feriados, y tú lo ajustas
                 antes de publicarlo. Para cualquier empresa que opere por turnos.
               </p>
               <div className="lp-hero-actions">
@@ -177,7 +177,7 @@ export default function Landing() {
                 incorporan sin rehacer tus horarios.
               </p>
               <p className="lp-small">
-                TURNSOFT es una ayuda a la planificación y no reemplaza la asesoría laboral.
+                SAFETURN es una ayuda a la planificación y no reemplaza la asesoría laboral.
               </p>
             </div>
             <dl className="lp-rules">
@@ -223,7 +223,7 @@ export default function Landing() {
 
         <section className="lp-final">
           <div className="lp-wrap">
-            <h2>Prueba TURNSOFT con tu propio equipo</h2>
+            <h2>Prueba SAFETURN con tu propio equipo</h2>
             <p>15 días para armar tus primeros horarios.</p>
             <Link to="/registro" className="lp-btn lp-btn-primary lp-btn-lg">
               Empezar la prueba <ArrowRight size={18} />
@@ -234,8 +234,8 @@ export default function Landing() {
 
       <footer className="lp-foot">
         <div className="lp-wrap lp-foot-in">
-          <span className="lp-brand lp-brand-sm"><BrandMark size={26} /> TURNSOFT · Turnos para Chile</span>
-          <span>© 2026 TURNSOFT</span>
+          <span className="lp-brand lp-brand-sm"><BrandMark size={26} /> SAFETURN · Turnos para Chile</span>
+          <span>© 2026 SAFETURN</span>
         </div>
       </footer>
     </div>

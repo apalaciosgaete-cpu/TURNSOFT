@@ -1,8 +1,8 @@
-# TURNSOFT
+# SAFETURN
 
 **Generador de horarios laborales para Chile, con validación normativa y enfoque multi-sector.**
 
-TURNSOFT nació como una herramienta para guardias de seguridad privada. Hoy conserva ese nombre y su historial, pero incorpora un motor compartido que cubre cinco sectores:
+SAFETURN nació como una herramienta para guardias de seguridad privada. Hoy conserva ese nombre y su historial, pero incorpora un motor compartido que cubre cinco sectores:
 
 - Seguridad privada
 - Salud
@@ -12,9 +12,9 @@ TURNSOFT nació como una herramienta para guardias de seguridad privada. Hoy con
 
 La aplicación funciona **local-first**: la interfaz guarda escenarios, dotación y horarios en el navegador (`localStorage`) y no necesita PostgreSQL para probarse. El backend puede usar el mismo motor y persistir los resultados cuando la base de datos está disponible.
 
-TURNSOFT opera con **cuentas multi-cliente**. En la demo, la empresa operadora **Vigo Seguridad** administra ocho clientes; cada usuario cliente queda aislado en su propia cuenta y no puede ver ni modificar escenarios, dotación o sucursales de otra. El aislamiento se aplica en la interfaz y se refuerza en el backend con el `cliente_id` del token JWT.
+SAFETURN opera con **cuentas multi-cliente**. En la demo, la empresa operadora **Vigo Seguridad** administra ocho clientes; cada usuario cliente queda aislado en su propia cuenta y no puede ver ni modificar escenarios, dotación o sucursales de otra. El aislamiento se aplica en la interfaz y se refuerza en el backend con el `cliente_id` del token JWT.
 
-> **Herramienta de apoyo.** TURNSOFT no constituye asesoría legal. Antes de publicar un horario revisa el contrato de trabajo, el reglamento interno, los convenios colectivos, las autorizaciones de la Dirección del Trabajo y el calendario oficial de feriados.
+> **Herramienta de apoyo.** SAFETURN no constituye asesoría legal. Antes de publicar un horario revisa el contrato de trabajo, el reglamento interno, los convenios colectivos, las autorizaciones de la Dirección del Trabajo y el calendario oficial de feriados.
 
 ---
 
@@ -52,9 +52,9 @@ Credenciales demo (todas usan la clave `demo1234`):
 | `operador@vigoseguridad.cl` | Operador | Ve y administra los ocho clientes |
 | `cliente1@vigoseguridad.cl` … `cliente8@vigoseguridad.cl` | Cliente | Solo la cuenta del cliente correspondiente |
 
-La sesión y los datos demo se guardan en `localStorage` (`turnsoft.session.v1` y `turnsoft.tenants.v3`). El operador puede usar el selector **Cliente activo** o **Todos los clientes**; un usuario cliente no tiene ese selector y queda fijado a su cuenta.
+La sesión y las planificaciones se guardan en `localStorage` (`safeturn.session.v3` y `safeturn.workspace.v4`). Las claves antiguas `turnsoft.*` se migran solas la primera vez que se abre la app. Quien opera para varios clientes puede elegir a quién ver; un usuario cliente no tiene ese selector y queda fijado a su cuenta.
 
-TURNSOFT **no envía correos de acceso**: las cuentas demo se escriben directamente en la pantalla de login. No hay recuperación de clave ni notificaciones por email en esta versión.
+SAFETURN **no envía correos de acceso**: las cuentas demo se escriben directamente en la pantalla de login. No hay recuperación de clave ni notificaciones por email en esta versión.
 
 Para compilar la versión de producción:
 
@@ -108,7 +108,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=postgres
-DB_NAME=turnsoft_db
+DB_NAME=safeturn_db
 ```
 
 En producción (`NODE_ENV` distinto de `development` o `test`) el servidor **no arranca** si `JWT_SECRET` falta, es un valor de ejemplo o tiene menos de 32 caracteres. El inicio de sesión, el registro, el setup y el motor tienen límites de solicitudes por conexión (y por cuenta en el login).
@@ -119,7 +119,7 @@ En producción (`NODE_ENV` distinto de `development` o `test`) el servidor **no 
 
 ## Arquitectura
 
-TURNSOFT tiene un único motor de reglas en `shared/`, usado por la interfaz y por el backend:
+SAFETURN tiene un único motor de reglas en `shared/`, usado por la interfaz y por el backend:
 
 ```text
 frontend (React + Vite)
@@ -142,7 +142,7 @@ backend (Express) ──► PostgreSQL (opcional, persistencia)
 ### Estructura
 
 ```text
-TURNSOFT/
+SAFETURN/
 ├── shared/                     # Motor compartido (ESM)
 │   ├── dates.js                # Fechas, semanas ISO, horas de turnos
 │   ├── holidays.js             # Feriados nacionales y regionales
@@ -158,7 +158,7 @@ TURNSOFT/
 │   └── src/
 │       ├── components/         # Layout, LoginScreen, ScenarioModal y UI
 │       ├── pages/              # Panel, horario, personal, turnos, reglas, legal, reportes, clientes
-│       ├── store/              # AuthContext (sesión demo) y TurnsoftContext (estado multi-tenant)
+│       ├── store/              # AuthContext (sesión demo) y SafeturnContext (estado multi-tenant)
 │       ├── lib/                # Exportaciones CSV/JSON
 │       └── styles.css          # Sistema visual propio
 ├── backend/
@@ -247,7 +247,7 @@ Un horario generado se puede ajustar sin perder el rastro de lo que cambió. Las
 
 **Cobertura de una inasistencia**
 
-- La persona que cubre debe estar **Libre** ese día, activa y tener las certificaciones vigentes del turno. TURNSOFT no permite reemplazos con turno o ausencia el mismo día.
+- La persona que cubre debe estar **Libre** ese día, activa y tener las certificaciones vigentes del turno. SAFETURN no permite reemplazos con turno o ausencia el mismo día.
 - Si la celda de la persona ausente aún no tenía una novedad, la cobertura crea una ausencia de día completo y la vincula (`absenceId`).
 - La celda del reemplazo muestra una marca **C** y la cobertura del día se mantiene completa. Al anular la cobertura, el reemplazo vuelve a su estado anterior.
 
@@ -268,7 +268,7 @@ La referencia legal se mantiene en `shared/legal.js` y se muestra en la página 
 
 - **Jornada ordinaria:** 42 horas semanales a la fecha de esta versión (noviembre de 2026). La Ley 21.561 fija la reducción a 40 horas desde el **26-04-2028**.
 - **Turnos de 12 horas:** no son jornada ordinaria. Requieren un régimen excepcional autorizado. Para seguridad privada se usan como referencia el DS 48/2023 y la Res. Ex. 1185/2006; la autorización concreta debe estar vigente.
-- **Descanso entre jornadas:** TURNSOFT usa 12 horas como parámetro contractual/reglamentario configurable. El Código del Trabajo no establece un mínimo general de 12 horas entre jornadas para todos los casos.
+- **Descanso entre jornadas:** SAFETURN usa 12 horas como parámetro contractual/reglamentario configurable. El Código del Trabajo no establece un mínimo general de 12 horas entre jornadas para todos los casos.
 - **Recargo dominical:** el 30% es una referencia de comercio (art. 38). Otras actividades pueden tener un tratamiento distinto.
 - **Dos domingos libres al mes:** es una regla propia del comercio. No se aplica de forma universal a seguridad, salud o minería.
 - **Feriados:** se calculan para el período. Verifica siempre el calendario oficial y los feriados regionales de la operación.

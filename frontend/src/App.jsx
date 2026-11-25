@@ -32,7 +32,7 @@ function NotFound() {
       <div className="not-found">
         <span className="not-found-code">404</span>
         <h2>Página no encontrada</h2>
-        <p>La ruta que buscas no existe en TURNSOFT.</p>
+        <p>La ruta que buscas no existe en SAFETURN.</p>
         <Link className="btn btn-primary btn-md" to="/">Volver al panel</Link>
       </div>
     </div>

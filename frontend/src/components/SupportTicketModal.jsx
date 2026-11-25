@@ -80,7 +80,7 @@ export function SupportTicketModal({ open, onClose, onCreate }) {
         <div className="client-form-note field-full">
           <Headphones size={17} />
           <div>
-            <strong>Soporte directo con TURNSOFT</strong>
+            <strong>Soporte directo con SAFETURN</strong>
             <span>Tu empresa verá la respuesta en esta misma página. No se comparte con otras empresas.</span>
           </div>
         </div>

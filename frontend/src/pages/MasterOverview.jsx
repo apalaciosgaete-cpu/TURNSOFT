@@ -92,7 +92,7 @@ export default function MasterOverview() {
           <span className="master-hero-eyebrow">
             <Activity size={15} /> Ocupación de la plataforma
           </span>
-          <h2>Lo que está habitando TURNSOFT, en tiempo real.</h2>
+          <h2>Lo que está habitando SAFETURN, en tiempo real.</h2>
           <p>
             Empresas que se registran solas, pruebas que avanzan, pagos que se
             verifican y soporte que espera respuesta. Esta consola solo supervisa:

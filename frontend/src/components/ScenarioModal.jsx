@@ -3,7 +3,7 @@ import { Building2, Contact, Clock3 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import { todayISO } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { activeGuardias, guardiaToEmployee, plantillaToShift } from '../lib/baseImport.js';
 import { Button, Field, Modal, SectorIcon } from './ui.jsx';
 
@@ -51,7 +51,7 @@ export function ScenarioModal({ open, onClose, scenario = null, initialClientId 
     activeClientId,
     isOperator,
     session,
-  } = useTurnsoft();
+  } = useSafeturn();
   const { token } = useAuth();
   const [form, setForm] = useState(() => emptyForm(null, null, ''));
   const [error, setError] = useState('');

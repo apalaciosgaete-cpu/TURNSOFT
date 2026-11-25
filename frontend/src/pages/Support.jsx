@@ -11,7 +11,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { dateLabel, relativeTime } from '../lib/format.js';
 import { Badge, Button, Card, EmptyState, Modal, Stat } from '../components/ui.jsx';
 import { SupportTicketModal } from '../components/SupportTicketModal.jsx';
@@ -27,7 +27,7 @@ const STATUS_LABEL = {
 
 export default function Support() {
   const { token } = useAuth();
-  const { notify } = useTurnsoft();
+  const { notify } = useSafeturn();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -85,7 +85,7 @@ export default function Support() {
     <div className="page support-page">
       <section className="support-hero">
         <div>
-          <span className="support-eyebrow"><Headphones size={15} /> Soporte TURNSOFT</span>
+          <span className="support-eyebrow"><Headphones size={15} /> Soporte SAFETURN</span>
           <h2>Estamos para ayudarte a operar sin fricción.</h2>
           <p>
             Envía consultas sobre planes, pagos o problemas técnicos. El supervisor
@@ -256,7 +256,7 @@ export default function Support() {
             {selected.respuesta ? (
               <div className="support-response">
                 <span>
-                  <Headphones size={15} /> Respuesta de TURNSOFT
+                  <Headphones size={15} /> Respuesta de SAFETURN
                   {selected.respondido_en ? ` · ${dateLabel(selected.respondido_en, { withTime: true })}` : ''}
                 </span>
                 <p>{selected.respuesta}</p>

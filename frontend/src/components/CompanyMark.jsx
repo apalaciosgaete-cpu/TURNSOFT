@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { prepararLogo } from '../lib/logo.js';
 
 function companyInitials(name) {
@@ -30,7 +30,7 @@ export function CompanyMark({ name, logo, size = 44, className = '' }) {
 /** Subir y quitar el logo: lo usan el menú lateral y la página Mi empresa. */
 export function useCompanyLogo() {
   const { session, canManageUsers, updateCompanyLogo } = useAuth();
-  const { notify } = useTurnsoft();
+  const { notify } = useSafeturn();
   const inputRef = useRef(null);
   const [busy, setBusy] = useState(false);
 

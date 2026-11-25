@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 
-const SESSION_KEY = 'turnsoft.session.v3';
+const SESSION_KEY = 'safeturn.session.v3';
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const REQUEST_TIMEOUT = 90000;
 
@@ -129,7 +129,7 @@ function buildSession(user, dbClients, token, previous = null) {
     canManageUsers: user.rol === 'operador' || user.rol === 'admin',
     mustChangePassword: Boolean(user.debe_cambiar_clave),
     dataTreatmentPending: Boolean(user.tratamiento_datos_pendiente),
-    empresa: user.empresa_nombre || (isSuperadmin ? 'TURNSOFT' : 'Mi empresa'),
+    empresa: user.empresa_nombre || (isSuperadmin ? 'SAFETURN' : 'Mi empresa'),
     empresaId: user.empresa_id || null,
     empresaSector: user.empresa_sector || null,
     empresaLogo: user.empresa_logo || null,

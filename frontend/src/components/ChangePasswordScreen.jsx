@@ -34,7 +34,7 @@ export function ChangePasswordScreen() {
         <form className="login-card" onSubmit={submit}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: 'var(--ink)' }}>
             <BrandMark size={40} />
-            <strong style={{ fontSize: 18, letterSpacing: '0.04em' }}>TURNSOFT</strong>
+            <strong style={{ fontSize: 18, letterSpacing: '0.04em' }}>SAFETURN</strong>
           </div>
 
           <div>

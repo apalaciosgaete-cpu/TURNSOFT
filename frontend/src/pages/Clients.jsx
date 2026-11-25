@@ -15,14 +15,14 @@ import {
 } from 'lucide-react';
 import { SECTOR_META } from '@shared/legal.js';
 import { useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { ClientModal } from '../components/ClientModal.jsx';
 import { ScenarioModal } from '../components/ScenarioModal.jsx';
 import { Badge, Button, Card, SectorIcon, Stat } from '../components/ui.jsx';
 
 export default function Clients() {
   const { isOperator, readOnly, activeClientId, selectClient, session } = useAuth();
-  const { clientSummaries, notify } = useTurnsoft();
+  const { clientSummaries, notify } = useSafeturn();
   const navigate = useNavigate();
   const [modalClientId, setModalClientId] = useState(null);
   const [clientOpen, setClientOpen] = useState(false);
@@ -205,7 +205,7 @@ export default function Clients() {
       )}
 
       {!isOperator ? (
-        <Card title="Aislamiento de tu cuenta" subtitle="Así protege TURNSOFT los datos de cada cliente.">
+        <Card title="Aislamiento de tu cuenta" subtitle="Así protege SAFETURN los datos de cada cliente.">
           <div className="isolation-grid">
             <div>
               <ShieldCheck size={18} />

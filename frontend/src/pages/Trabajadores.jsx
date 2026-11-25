@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { todayISO } from '@shared/dates.js';
 import { apiRequest, useAuth } from '../store/AuthContext.jsx';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { dateLabel } from '../lib/format.js';
 import { EMAIL_RE, RUT_RE, dateInput, normalizeRut } from '../lib/forms.js';
 import {
@@ -59,7 +59,7 @@ function toGuardiaForm(guardia) {
 
 export default function Trabajadores() {
   const { token, readOnly } = useAuth();
-  const { notify } = useTurnsoft();
+  const { notify } = useSafeturn();
 
   const [guardias, setGuardias] = useState([]);
   const [loading, setLoading] = useState(true);

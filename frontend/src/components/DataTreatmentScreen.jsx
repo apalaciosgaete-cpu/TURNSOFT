@@ -89,7 +89,7 @@ export function DataTreatmentScreen() {
         <div className="dt-brand">
           <BrandMark size={34} />
           <div>
-            <strong>TURNSOFT</strong>
+            <strong>SAFETURN</strong>
             <span>Turnos para Chile</span>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function DataTreatmentScreen() {
               <span className="dt-eyebrow">Primer ingreso</span>
               <h1>Tratamiento de datos de tu empresa</h1>
               <p>
-                Tu empresa es la responsable de los datos de su personal y TURNSOFT
+                Tu empresa es la responsable de los datos de su personal y SAFETURN
                 los trata por encargo suyo. Revisa los puntos esenciales y acepta
                 para empezar a usar la plataforma.
               </p>
@@ -215,7 +215,7 @@ export function DataTreatmentScreen() {
                     />
                     <span>
                       Declaro que mi empresa cuenta con una base legal para tratar los
-                      datos de su personal en TURNSOFT y que informará a sus trabajadores.
+                      datos de su personal en SAFETURN y que informará a sus trabajadores.
                     </span>
                   </label>
                   <label className="dt-check">
@@ -256,7 +256,7 @@ export function DataTreatmentScreen() {
         </form>
 
         <p className="dt-note">
-          <Lock size={14} /> Tu personal no accede a TURNSOFT y los datos nunca se
+          <Lock size={14} /> Tu personal no accede a SAFETURN y los datos nunca se
           venden ni se usan para publicidad.
         </p>
       </main>

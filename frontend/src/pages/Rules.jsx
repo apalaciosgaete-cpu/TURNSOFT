@@ -9,7 +9,7 @@ import {
   weeklyHoursAt,
 } from '@shared/legal.js';
 import { getAllowedDailyHours, getExceptionalAverageLimit, getOrdinaryWeeklyLimit } from '@shared/model.js';
-import { useTurnsoft } from '../store/TurnsoftContext.jsx';
+import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { Badge, Button, Card, Field, Toggle } from '../components/ui.jsx';
 
 const GROUPS = [...new Set(RULE_CATALOG.map((rule) => rule.group))];
@@ -24,7 +24,7 @@ export default function Rules() {
     busyScenarioId,
     isStale,
     readOnly,
-  } = useTurnsoft();
+  } = useSafeturn();
 
   if (!scenario) return null;
   const rules = scenario.rules;

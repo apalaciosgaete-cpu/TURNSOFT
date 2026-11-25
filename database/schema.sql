@@ -1,5 +1,5 @@
 -- ============================================
--- TURNSOFT - Esquema de base de datos
+-- SAFETURN - Esquema de base de datos
 -- Generador multi-sector de horarios laborales (Chile)
 -- Sectores: seguridad, salud, minería, retail y logística
 -- ============================================

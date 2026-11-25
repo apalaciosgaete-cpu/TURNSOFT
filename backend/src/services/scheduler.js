@@ -1,7 +1,7 @@
 /**
  * Servicio de planificación multi-sector.
  *
- * Envuelve el motor y el validador compartidos de TURNSOFT (`shared/`), que se
+ * Envuelve el motor y el validador compartidos de SAFETURN (`shared/`), que se
  * escriben como módulos ESM para poder usarse también desde el frontend. Desde
  * el backend CommonJS se cargan con `import()` dinámico y se cachean.
  */

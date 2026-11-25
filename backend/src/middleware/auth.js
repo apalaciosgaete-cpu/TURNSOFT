@@ -38,7 +38,7 @@ function empresaAccess(empresa) {
   return {
     allowed: false,
     code: 'EMPRESA_SUSPENDIDA',
-    error: 'La cuenta de tu empresa está suspendida por falta de pago. Contacta a TURNSOFT para regularizar la situación.',
+    error: 'La cuenta de tu empresa está suspendida por falta de pago. Contacta a SAFETURN para regularizar la situación.',
   };
 }
 

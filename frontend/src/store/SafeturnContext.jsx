@@ -19,10 +19,10 @@ import {
 } from '@shared/exceptions.js';
 import { useAuth } from './AuthContext.jsx';
 
-const STORAGE_PREFIX = 'turnsoft.workspace.v4';
+const STORAGE_PREFIX = 'safeturn.workspace.v4';
 const EMPLOYEE_COLORS = ['#0f766e', '#0284c7', '#7c3aed', '#db2777', '#b45309', '#059669', '#dc2626', '#475569', '#4338ca', '#0e7490'];
 
-const TurnsoftContext = createContext(null);
+const SafeturnContext = createContext(null);
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -107,7 +107,7 @@ function scenarioVisibleTo(scenario, session, isOperator, activeClientId) {
   return !activeClientId || scenario.clientId === activeClientId;
 }
 
-export function TurnsoftProvider({ children }) {
+export function SafeturnProvider({ children }) {
   const { session, isOperator, activeClientId, clients } = useAuth();
   const [state, setState] = useState(() => loadState(session));
   const [busyScenarioId, setBusyScenarioId] = useState(null);
@@ -1172,11 +1172,11 @@ export function TurnsoftProvider({ children }) {
     ]
   );
 
-  return <TurnsoftContext.Provider value={value}>{children}</TurnsoftContext.Provider>;
+  return <SafeturnContext.Provider value={value}>{children}</SafeturnContext.Provider>;
 }
 
-export function useTurnsoft() {
-  const context = useContext(TurnsoftContext);
-  if (!context) throw new Error('useTurnsoft debe usarse dentro de TurnsoftProvider');
+export function useSafeturn() {
+  const context = useContext(SafeturnContext);
+  if (!context) throw new Error('useSafeturn debe usarse dentro de SafeturnProvider');
   return context;
 }
