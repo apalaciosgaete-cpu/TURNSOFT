@@ -3,6 +3,7 @@ const router = express.Router();
 const pool = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const { scopedClienteId, scopedEmpresaId, denyValidador } = require('../middleware/tenant');
+const { MAX_FILAS_IMPORTACION, normalizarRut, validarTrabajador } = require('../utils/trabajadores');
 
 async function findGuard(id, user, { empresaId = null, clienteId = null } = {}) {
   const scopedEmpresa = scopedEmpresaId(user, empresaId);
@@ -109,6 +110,152 @@ router.post('/', authenticateToken, denyValidador, async (req, res) => {
   } catch (error) {
     if (error.status) return res.status(error.status).json({ error: error.message });
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+/**
+ * Carga masiva de trabajadores (Excel, CSV o una conexión con otra aplicación).
+ *
+ * Valida cada fila, omite los RUT repetidos (dentro de la carga o ya existentes en la empresa),
+ * respeta el tope del plan y guarda todo en una sola transacción. Las filas con problemas no
+ * impiden guardar las correctas: se devuelven con el motivo para que se puedan corregir.
+ */
+router.post('/importar', authenticateToken, denyValidador, async (req, res) => {
+  let client;
+  try {
+    const empresaId = scopedEmpresaId(req.user, req.body.empresa_id);
+    const clienteId = scopedClienteId(req.user, req.body.cliente_id);
+    const filas = req.body.trabajadores;
+
+    if (!empresaId) {
+      return res.status(400).json({ error: 'empresa_id es requerido.' });
+    }
+    if (!Array.isArray(filas) || filas.length === 0) {
+      return res.status(400).json({ error: 'Envía al menos un trabajador para importar.' });
+    }
+    if (filas.length > MAX_FILAS_IMPORTACION) {
+      return res.status(400).json({
+        error: `Cada carga admite hasta ${MAX_FILAS_IMPORTACION} trabajadores. Divide el archivo en partes.`,
+      });
+    }
+
+    const invalidos = [];
+    const omitidos = [];
+    const candidatos = [];
+    const vistos = new Map();
+
+    filas.forEach((item, indice) => {
+      // La primera fila de datos de una planilla con encabezado es la 2.
+      const fila = Number.isInteger(item?.fila) ? item.fila : indice + 2;
+      const resultado = validarTrabajador(item);
+      const nombre = String(item?.nombre_completo ?? '').trim();
+      const rutOriginal = String(item?.rut ?? '').trim();
+
+      if (resultado.errores.length) {
+        invalidos.push({ fila, nombre, rut: rutOriginal, errores: resultado.errores });
+        return;
+      }
+      const previa = vistos.get(resultado.datos.rut);
+      if (previa) {
+        omitidos.push({
+          fila,
+          nombre: resultado.datos.nombre_completo,
+          rut: resultado.datos.rut,
+          motivo: `RUT repetido en el archivo (ya aparece en la fila ${previa}).`,
+        });
+        return;
+      }
+      vistos.set(resultado.datos.rut, fila);
+      candidatos.push({ fila, ...resultado.datos });
+    });
+
+    let creados = 0;
+
+    if (candidatos.length > 0) {
+      client = await pool.connect();
+      await client.query('BEGIN');
+      // Serializa las cargas de una misma empresa para que dos cargas simultáneas no dupliquen RUT
+      // ni superen el tope del plan.
+      await client.query('SELECT id FROM empresas WHERE id = $1 FOR UPDATE', [empresaId]);
+
+      const existentes = await client.query('SELECT rut FROM guardias WHERE empresa_id = $1', [empresaId]);
+      const rutsExistentes = new Set(existentes.rows.map((row) => normalizarRut(row.rut)));
+
+      const nuevos = [];
+      for (const candidato of candidatos) {
+        if (rutsExistentes.has(candidato.rut)) {
+          omitidos.push({
+            fila: candidato.fila,
+            nombre: candidato.nombre_completo,
+            rut: candidato.rut,
+            motivo: 'Ya existe un trabajador con ese RUT.',
+          });
+        } else {
+          nuevos.push(candidato);
+        }
+      }
+
+      const limite = await client.query(
+        `SELECT p.max_guardias
+         FROM empresas e
+         LEFT JOIN planes p ON p.id = e.plan_id
+         WHERE e.id = $1`,
+        [empresaId]
+      );
+      const planLimit = limite.rows[0]?.max_guardias;
+      if (planLimit !== null && planLimit !== undefined && existentes.rowCount + nuevos.length > planLimit) {
+        await client.query('ROLLBACK');
+        return res.status(403).json({
+          error:
+            `Tu plan permite hasta ${planLimit} trabajadores y ya tienes ${existentes.rowCount}. ` +
+            `Esta carga agregaría ${nuevos.length}. Amplía el plan o carga menos trabajadores.`,
+          code: 'PLAN_LIMIT',
+        });
+      }
+
+      if (nuevos.length > 0) {
+        await client.query(
+          `INSERT INTO guardias
+             (empresa_id, cliente_id, nombre_completo, rut, email, telefono,
+              fecha_contrato, horas_semanales_max, cargo, activo)
+           SELECT $1::uuid, $2::uuid, t.nombre, t.rut, t.email, t.telefono,
+                  t.fecha, t.horas, t.cargo, t.activo
+           FROM unnest($3::text[], $4::text[], $5::text[], $6::text[], $7::date[],
+                       $8::int[], $9::text[], $10::boolean[])
+                AS t(nombre, rut, email, telefono, fecha, horas, cargo, activo)`,
+          [
+            empresaId,
+            clienteId,
+            nuevos.map((n) => n.nombre_completo),
+            nuevos.map((n) => n.rut),
+            nuevos.map((n) => n.email),
+            nuevos.map((n) => n.telefono),
+            nuevos.map((n) => n.fecha_contrato),
+            nuevos.map((n) => n.horas_semanales_max),
+            nuevos.map((n) => n.cargo),
+            nuevos.map((n) => n.activo),
+          ]
+        );
+      }
+      await client.query('COMMIT');
+      creados = nuevos.length;
+    }
+
+    omitidos.sort((a, b) => a.fila - b.fila);
+    invalidos.sort((a, b) => a.fila - b.fila);
+    res.status(creados > 0 ? 201 : 200).json({ creados, omitidos, invalidos });
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch (rollbackError) {
+        // La conexión ya estaba cerrada o sin transacción abierta.
+      }
+    }
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    if (client) client.release();
   }
 });
 

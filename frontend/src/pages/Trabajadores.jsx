@@ -4,9 +4,11 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarRange,
+  FileSpreadsheet,
   Mail,
   Pencil,
   Phone,
+  Plug,
   Plus,
   Power,
   RefreshCw,
@@ -21,6 +23,8 @@ import { apiRequest, useAuth } from '../store/AuthContext.jsx';
 import { useSafeturn } from '../store/SafeturnContext.jsx';
 import { dateLabel } from '../lib/format.js';
 import { EMAIL_RE, RUT_RE, dateInput, normalizeRut } from '../lib/forms.js';
+import { ConexionesModal } from '../components/ConexionesModal.jsx';
+import { ImportarTrabajadores } from '../components/ImportarTrabajadores.jsx';
 import {
   Avatar,
   Badge,
@@ -70,9 +74,12 @@ export default function Trabajadores() {
   const [guardiaError, setGuardiaError] = useState('');
   const [savingGuardia, setSavingGuardia] = useState(false);
 
-  const cargar = useCallback(async () => {
+  const [importarAbierto, setImportarAbierto] = useState(false);
+  const [conexionesAbierto, setConexionesAbierto] = useState(false);
+
+  const cargar = useCallback(async ({ silencioso = false } = {}) => {
     if (!token) return;
-    setLoading(true);
+    if (!silencioso) setLoading(true);
     setLoadError('');
     try {
       const lista = await apiRequest('/guardias', { token });
@@ -87,6 +94,9 @@ export default function Trabajadores() {
   useEffect(() => {
     cargar();
   }, [cargar]);
+
+  // RUT que ya están en la base, para avisar en la vista previa de la carga masiva.
+  const rutsExistentes = useMemo(() => new Set(guardias.map((guardia) => normalizeRut(guardia.rut))), [guardias]);
 
   const activos = useMemo(
     () => guardias.filter((guardia) => guardia.activo !== false).length,
@@ -253,6 +263,25 @@ export default function Trabajadores() {
         actions={
           <div className="card-actions-row">
             <Badge tone="neutral">{activos} activos de {guardias.length}</Badge>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={Plug}
+              onClick={() => setConexionesAbierto(true)}
+              hidden={readOnly}
+              title="Conecta otros sistemas para traer a tus trabajadores"
+            >
+              Conectar otra aplicación
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              icon={FileSpreadsheet}
+              onClick={() => setImportarAbierto(true)}
+              hidden={readOnly}
+            >
+              Cargar desde Excel
+            </Button>
             <Button size="sm" icon={Plus} onClick={abrirGuardiaNuevo} hidden={readOnly}>Agregar trabajador</Button>
           </div>
         }
@@ -346,8 +375,15 @@ export default function Trabajadores() {
           <EmptyState
             icon={Users}
             title="Tu base de trabajadores está vacía"
-            description="Agrega a las personas de tu empresa. Después podrás traerlas a cada planificación desde Dotación."
-            action={readOnly ? null : <Button icon={Plus} onClick={abrirGuardiaNuevo}>Agregar primer trabajador</Button>}
+            description="Súbelas todas juntas desde un Excel o agrégalas una a una. Después podrás traerlas a cada planificación desde Dotación."
+            action={
+              readOnly ? null : (
+                <div className="empty-actions">
+                  <Button icon={FileSpreadsheet} onClick={() => setImportarAbierto(true)}>Cargar desde Excel</Button>
+                  <Button variant="secondary" icon={Plus} onClick={abrirGuardiaNuevo}>Agregar primer trabajador</Button>
+                </div>
+              )
+            }
           />
         )}
       </Card>
@@ -375,6 +411,24 @@ export default function Trabajadores() {
           </div>
         </Link>
       </div>
+
+      <ImportarTrabajadores
+        open={importarAbierto}
+        onClose={() => setImportarAbierto(false)}
+        existentes={rutsExistentes}
+        token={token}
+        onDone={(respuesta) => {
+          if (respuesta?.creados) cargar({ silencioso: true });
+        }}
+      />
+      <ConexionesModal
+        open={conexionesAbierto}
+        onClose={() => setConexionesAbierto(false)}
+        onCargarExcel={() => {
+          setConexionesAbierto(false);
+          setImportarAbierto(true);
+        }}
+      />
 
       <Modal
         open={Boolean(guardiaEditor)}
