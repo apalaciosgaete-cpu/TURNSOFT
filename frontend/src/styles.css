@@ -8287,3 +8287,275 @@ thead .summary-cell {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* ===== Carga masiva de trabajadores y conexiones ===== */
+.spin {
+  animation: spin 0.9s linear infinite;
+}
+
+.empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.import-notice {
+  margin-bottom: 14px;
+}
+
+.import-step {
+  display: grid;
+  gap: 14px;
+}
+
+.import-file-input {
+  display: none;
+}
+
+.import-drop {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 34px 20px;
+  border: 2px dashed var(--line-strong);
+  border-radius: 16px;
+  background: var(--surface-2, #f8fafd);
+  color: var(--ink-2, #1e2f4d);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.import-drop:hover,
+.import-drop.is-over {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.import-drop:disabled {
+  cursor: progress;
+}
+
+.import-drop strong {
+  font-size: 14px;
+}
+
+.import-drop > span:last-child {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.import-drop-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.import-help {
+  display: grid;
+  gap: 9px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.import-help-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.import-help p,
+.import-hint {
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.import-cols,
+.import-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.import-file-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.import-file-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.import-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.import-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.import-table th {
+  position: sticky;
+  top: 0;
+  padding: 9px 12px;
+  background: var(--surface-2, #f8fafd);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.import-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.import-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.import-table tr.is-problem {
+  background: #fffaf5;
+}
+
+.import-num {
+  width: 52px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.import-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.import-reason {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.import-done {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.import-done strong {
+  display: block;
+  font-size: 15px;
+}
+
+.import-done span:last-child {
+  color: var(--ink-2, #1e2f4d);
+  font-size: 12px;
+}
+
+.conn-body {
+  display: grid;
+  gap: 16px;
+}
+
+.conn-status {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.conn-status p {
+  color: var(--ink-2, #1e2f4d);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.conn-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.conn-list li {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.conn-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.conn-list strong {
+  display: block;
+  font-size: 13px;
+}
+
+.conn-list li span:last-child {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.conn-foot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 12px;
+  font-weight: 600;
+}
